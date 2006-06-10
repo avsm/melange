@@ -10,3 +10,5 @@ clean:
 	cd lib && ${MAKE} clean
 	cd tools && ${MAKE} clean
 
+install:
+	@echo Not done yet, sorry!
