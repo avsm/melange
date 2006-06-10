@@ -1,0 +1,10 @@
+# $Id$
+
+OCAMLMAKEFILE = ../../OCamlMakefile
+ 
+SOURCES = mpl_stdlib.mli mpl_stdlib.ml
+LIBS = unix str
+RESULT = mpl_stdlib
+all: ncl dcl
+
+include $(OCAMLMAKEFILE)

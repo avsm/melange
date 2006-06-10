@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+    <head>
+		<link rel="icon" href="http://recoil.org/none" />
+		<link rel="shortcut icon" href="http://recoil.org/none" />
+        <style type="text/css"> $STYLE </style>
+        <script language="javascript"><!-- $MOCHIKIT --></script>
+        <script language="javascript"><!-- $CANVASGRAPH --></script>
+        <script language="javascript"><!-- 
+            total_lines= $TOTALLINES;
+			spl_url = self.location.href;
+            $JAVASCRIPT
+        --></script>
+        <title>SPL Debugger</title>
+    </head>
+    <body onload="javascript:begin()">
+        <div id="menu">
+            <a href="javascript:view_automata()">automata</a> |                
+            <a href="javascript:view_graphs()">graphs</a> |
+            <a href="javascript:next()">next</a> |
+			<br />
+			$AUTOMENU
+        </div>
+		<div id="outercons">
+<!--		 <p id="console"></p> -->
+		</div>
+        $AUTO
+    </body>
+</html>

@@ -1,0 +1,90 @@
+function
+transport_msgs (bool encrypted, bool serv_auth)
+{
+    multiple {
+        either {
+            either {
+                Transmit_Transport_KexInit;
+                Receive_Transport_KexInit;
+            } or (encrypted) {
+                // we receive a re-key request from server
+                Receive_Transport_KexInit;
+                Transport_KexInit;
+            }
+            either {
+                Expect_DHInit;
+                Transport_DiffieHellmanGroupSHA1_Init;
+                Receive_DiffieHellmanGroupSHA1_Reply;
+            } or {
+                Expect_GexInit;
+                Transmit_DiffieHellmanGexSHA1_Request;
+                Receive_DiffieHellmanGexSHA1_Group;
+                Transmit_DiffieHellmanGexSHA1_Init;
+                Receive_DiffieHellmanGexSHA1_Reply;
+            }
+            Transmit_Transport_NewKeys;
+            Receive_Transport_NewKeys;
+            encrypted = true;
+        } or (encrypted && !serv_auth) {
+            Transmit_Transport_ServiceRequest_UserAuth;
+            Receive_Transport_ServiceAccept_UserAuth;
+            serv_auth = true;
+        }
+    }
+}
+
+automaton
+transport (bool encrypted, bool serv_auth)
+{
+    during {
+        always_allow (Transmit_Transport_Debug, Receive_Transport_Debug,
+                      Transmit_Transport_Ignore, Receive_Transport_Ignore) {
+            transport_msgs(encrypted, serv_auth);
+        }
+    } handle {
+        Signal_QUIT;
+        Transmit_Transport_Disconnect;
+    }
+}
+
+function
+auth_decision (bool auth_success)
+{
+    either {
+        Receive_Auth_Success;
+        auth_success = true;
+    } or {
+        Receive_Auth_Failure;
+    }
+}
+
+automaton
+auth (bool success, bool failed)
+{
+    Receive_Transport_ServiceAccept_UserAuth;
+    Transmit_Auth_Req_None;
+    Receive_Auth_Failure;
+    do {
+        either {
+            always_allow (Receive_Auth_Banner) {
+                either {
+                    Transmit_Auth_Req_Password_Request;
+                    auth_decision (success);
+                } or {
+                    Transmit_Auth_Req_PublicKey_Request;
+                    auth_decision (success);
+                } or {
+                    Transmit_Auth_Req_PublicKey_Check;
+                    either {
+                        Receive_Auth_PublicKeyOK;
+                    } or {
+                        Receive_Auth_Failure;
+                    }
+                }
+            }
+        } or {
+            Notify_Auth_Permanent_Failure;
+            failed = true;
+        }
+    } until (success || failed);
+}

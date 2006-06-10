@@ -1,0 +1,83 @@
+// Automaton for an interactive channel session
+automaton
+interactive (bool done_pty, bool done_exec, bool got_eof, bool sent_eof)
+{
+    multiple {
+        either (!done_pty) {
+            Receive_Channel_Request_Pty;
+            either {
+                Expect_Pty_Success;
+                optional { Transmit_Channel_Success; }
+                done_pty = true;
+            } or {
+                Transmit_Channel_Failure;
+            }
+        } or (!done_exec) {
+            Receive_Channel_Request_Shell;
+            either {
+                Expect_Shell_Success;
+                optional { Transmit_Channel_Success; }
+                done_exec = true;
+            } or {
+                Transmit_Channel_Failure;
+            }
+        } or (!done_exec) {
+            Receive_Channel_Request_Exec;
+            either {
+                Expect_Exec_Success;
+                optional { Transmit_Channel_Success; }
+                done_exec = true;
+            } or {
+                Transmit_Channel_Failure;
+            }
+        } or (done_exec) {
+            either {
+                Receive_Channel_WindowAdjust;
+            } or {
+                Transmit_Channel_WindowAdjust;
+            } or (!got_eof) {
+                Receive_Channel_Data;
+            } or (!got_eof) {
+                Receive_Channel_ExtendedData;
+            } or (!sent_eof) {
+                Transmit_Channel_Data;
+            } or (!sent_eof) {
+                Transmit_Channel_ExtendedData;
+            } or (!got_eof) {
+                Receive_Channel_EOF;
+                got_eof = true;
+            } or (!sent_eof) {
+                Transmit_Channel_EOF;
+                sent_eof = true;
+            } or {
+                Receive_Channel_Close;
+                optional { Transmit_Channel_Close; }
+                exit;
+            } or {
+                Transmit_Channel_Close;
+                sent_eof = true;
+            }
+        }
+    }
+}
+
+automaton never ()
+{
+    either { Receive_Channel_OpenConfirmation; }
+    or { Transmit_Channel_Request_Pty; }
+    or { Receive_Channel_Success; }
+    or { Transmit_Channel_Success; }
+    or { Transmit_Channel_Request_Shell; }
+    or { Transmit_Channel_Request_Exec; }
+    or { Transmit_Channel_Request_X11; }
+    or { Transmit_Channel_Request_ExitStatus; } 
+    or { Receive_Channel_Request_Env; }
+    or { Receive_Channel_Request_ExitSignal; }
+    or { Receive_Channel_Request_ExitStatus; }
+    or { Receive_Channel_Request_LocalFlowControl; }
+    or { Receive_Channel_Request_Signal; }
+    or { Receive_Channel_Request_Subsystem; }
+    or { Receive_Channel_Request_WindowChange; }
+    or { Receive_Channel_Request_X11; }
+    or { Receive_Channel_Failure; }
+}

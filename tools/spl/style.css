@@ -1,0 +1,48 @@
+body {
+    font-family: sans-serif;
+    font-size: small;
+}
+
+.statecall {
+    color: #000031;
+    font-weight: normal;
+}
+
+.identifier {
+    color: #410040;
+}
+
+.location {
+    font-family: monospace;
+    font-size: smaller;
+}
+
+h1 {
+   font-size: 14px;
+}
+
+.autoheader {
+    color: #222244;
+    background-color: #DDDDDD;
+}
+
+.autobody {
+    border-style: dashed;
+    border-width: 1px;
+}
+
+table {
+    position: relative;
+}
+
+tr {
+    position: relative;
+}
+
+td {
+    position: relative;
+}
+
+.starthidden {
+    display: none;
+}

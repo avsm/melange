@@ -1,0 +1,14 @@
+# $Id$
+
+OCAMLMAKEFILE = ../../OCamlMakefile
+ 
+SOURCES = mpl_utils.ml mpl_types.ml mpl_location.ml mpl_bits.ml \
+	mpl_syntaxtree.ml mpl_typechk.ml mpl_parser.mli \
+	mpl_lexer.ml mpl_parser.ml mpl_cfg.ml mpl_ocaml.ml mplc.ml
+RESULT = mplc
+TRASH = mpl_parser.output mpl_parser.ml mpl_lexer.ml mpl_parser.mli
+LIBS = unix
+
+all: dc nc
+
+include $(OCAMLMAKEFILE)

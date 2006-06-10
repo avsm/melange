@@ -1,0 +1,176 @@
+// Three classes of functions:
+//    (1) xmit_* for transmitting packets,
+//    (2) recv_* for receiving packets,
+//    (3) notify_* flagged by program to notify automaton of other things
+
+automaton transport (bool encrypted, bool serv_auth)
+{
+    during {
+        always_allow (Transmit_Transport_Debug, Receive_Transport_Debug,
+                      Transmit_Transport_Ignore, Receive_Transport_Ignore) {
+            multiple {
+                either {
+                    either {
+                        Transmit_Transport_KexInit;
+                        Receive_Transport_KexInit;
+                    } or (encrypted) {
+                        // we receive a re-key request from client
+                        Receive_Transport_KexInit;
+                        Transmit_Transport_KexInit;
+                    }
+                    either {
+                        Expect_DHInit;
+                        Receive_Dhgroupsha1_Init;
+                        Transmit_Dhgroupsha1_Reply;
+                    } or {
+                        Expect_GexInit;
+                        Receive_Dhgexsha1_Request;
+                        Transmit_Dhgexsha1_Group;
+                        Receive_Dhgexsha1_Init;
+                        Transmit_Dhgexsha1_Reply;
+                    }
+                    Receive_Transport_NewKeys;
+                    Transmit_Transport_NewKeys;
+                    encrypted = true;
+                } or (encrypted && !serv_auth) {
+                    Receive_Transport_ServiceReq_UserAuth;
+                    Transmit_Transport_ServiceAccept_UserAuth;
+                    serv_auth = true;
+                }
+            }
+        }
+    } handle {
+        either {
+            Signal_HUP;
+        } or {
+            Signal_Quit;
+            exit;
+        } or {
+            either {
+                Receive_Transport_Disconnect;
+            } or {
+                Transmit_Transport_Disconnect;
+                exit;
+            }
+        } or {
+	    Receive_Transport_Unimplemented;
+        }
+    }
+}
+
+automaton auth (bool success, bool failed)
+{
+    Transmit_Transport_ServiceAccept_UserAuth;
+    // We repeat the auth cycle until it succeeds or permanently fails
+    during {
+        do {
+            always_allow (Transmit_Auth_Banner) {
+                either {
+                    Receive_Auth_Req_None;
+                    Transmit_Auth_Failure;
+                } or {
+                    Receive_Auth_Req_Password_Request;
+                    either {
+                        Transmit_Auth_Success;
+                        success = true;
+                    } or {
+                        Transmit_Auth_Failure;
+                    }
+                } or {
+                    Receive_Auth_Req_PublicKey_Request;
+                    either {
+                        Transmit_Auth_Success;
+                        success = true;
+                    } or {
+                        Transmit_Auth_Failure;
+                    }
+                } or {
+                    Receive_Auth_Req_PublicKey_Check;
+                    either {
+                        Transmit_Auth_PublicKey_OK;
+                    } or {
+                        Transmit_Auth_Failure;
+                    }
+                } or {
+                    Notify_Auth_Permanent_Failure;
+                    failed = true;
+                }
+            }
+        } until (success || failed);
+    } handle {
+        Transmit_Transport_Disconnect;
+        exit;
+    }
+}
+
+automaton channel ()
+{
+    Transmit_Auth_Success;
+    multiple {
+        either {
+            either { Receive_Channel_GlobalRequest_TCPForward; }
+            or { Receive_Channel_GlobalRequest_CancelTCPForward; }
+
+            either { Transmit_Channel_RequestFailure;
+            } or { Transmit_Channel_RequestSuccessPort; }
+        } or {
+            either { Receive_Channel_Open_Session; }
+            or { Receive_Channel_Open_TCPForward; }
+            or { Receive_Channel_Open_X11; }
+            or { Receive_Channel_Open_DirectTCP; }
+            either { Transmit_Channel_OpenConfirmation; }
+    	    or { Transmit_Channel_OpenFailure; }
+        }
+    }
+}
+
+// These messages should never happen.  If any of them do happen
+// then the state machine advances to the abort and an exception
+// will be raised immediately.
+automaton never ()
+{
+    /* unimplemented */
+    either{ Receive_Auth_Req_Password_Change; }
+    or { Transmit_Channel_RequestSuccess; } 
+    or { Receive_Auth_Req_Host; }
+    or { Receive_Auth_ChangeReq; }
+    /* should never happen */
+    or { Transmit_Channel_GlobalRequest_CancelTCPForward; } 
+    or { Transmit_Channel_GlobalRequest_TCPForward; } 
+    or { Receive_Channel_OpenFailure; }
+    or { Receive_Channel_RequestFailure; }
+    or { Transmit_Channel_Open_X11; } 
+    or { Receive_Channel_RequestSuccessPort; }
+    or { Receive_Channel_RequestSuccess; }
+    or { Transmit_Channel_Open_DirectTCP; } 
+    or { Receive_Channel_OpenConfirmation; }
+    or { Transmit_Channel_Open_Session; } 
+    or { Transmit_Channel_Open_TCPForward; } 
+    or { Transmit_Transport_ServiceReq_UserAuth; }
+    or { Transmit_Transport_UserAuth_ServiceAccept; }
+    or { Receive_Transport_ServiceAccept_UserAuth; }
+    or { Receive_Transport_ServiceReq_Connection; }
+    or { Transmit_Transport_ServiceReq_Connection; }
+    or { Transmit_Transport_ServiceAccept_Connection; }
+    or { Receive_Transport_ServiceAccept_Connection; }
+    or { Transmit_Auth_Req_None; }
+    or { Transmit_Auth_Req_PublicKey_Check; }
+    or { Transmit_Auth_ChangeReq; }
+    or { Transmit_Auth_Req_PublicKey_Request; }
+    or { Transmit_Auth_Req_Password_Request; } 
+    or { Transmit_Auth_Req_Password_Change; } 
+    or { Transmit_Auth_Req_Host; } 
+    or { Receive_Auth_Failure; } 
+    or { Receive_Auth_Success; } 
+    or { Receive_Auth_Banner; } 
+    or { Receive_Auth_PublicKey_OK; } 
+    or { Transmit_Dhgroupsha1_Init; } 
+    or { Receive_Dhgroupsha1_Reply; }
+    or { Transmit_Dhgexsha1_Request; }
+    or { Transmit_Dhgexsha1_Init; }
+    or { Receive_Dhgexsha1_Group; }
+    or { Receive_Dhgexsha1_Reply; }
+    or { Transmit_Transport_Unimplemented; }
+    abort;
+}
+
