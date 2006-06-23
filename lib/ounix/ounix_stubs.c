@@ -46,50 +46,50 @@ ounix_set_tcp_nodelay (value csock, value o)
 value
 ounix_set_ip_multicast_ttl (value socket, value ttl)
 {
-	CAMLparam2(socket, ttl);
-	CAMLlocal1(result);
+    CAMLparam2(socket, ttl);
+    CAMLlocal1(result);
 
-	int fd = Int_val(socket);
-	unsigned char t = Int_val(ttl);
-	int r = setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, &t, sizeof(t));
+    int fd = Int_val(socket);
+    unsigned char t = Int_val(ttl);
+    int r = setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, &t, sizeof(t));
 
-	result = Val_int(r);	
-	CAMLreturn(result);
+    result = Val_int(r);    
+    CAMLreturn(result);
 }
 
 value
 ounix_set_ip_multicast_loop (value socket, value v)
 {
-	CAMLparam2(socket, v);
-	CAMLlocal1(result);
-	
-	int fd = Int_val(socket);
-	u_char loop = Int_val(v);
-	int r = setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, &loop, sizeof(loop));
+    CAMLparam2(socket, v);
+    CAMLlocal1(result);
+    
+    int fd = Int_val(socket);
+    u_char loop = Int_val(v);
+    int r = setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, &loop, sizeof(loop));
 
-	result = Val_int(r);
-	CAMLreturn(result);
+    result = Val_int(r);
+    CAMLreturn(result);
 }
 
 value
 ounix_join_multicast_group (value socket, value group_msw, value group_lsw)
 {
-	CAMLparam3(socket, group_msw, group_lsw);
-	CAMLlocal1(result);
-	
-	int sd = Int_val(socket);
-	in_addr_t group = (Int_val(group_msw) << 16) | Int_val(group_lsw);
-	
-	int r;
-	struct ip_mreq mreq;
+    CAMLparam3(socket, group_msw, group_lsw);
+    CAMLlocal1(result);
+    
+    int sd = Int_val(socket);
+    in_addr_t group = (Int_val(group_msw) << 16) | Int_val(group_lsw);
+    
+    int r;
+    struct ip_mreq mreq;
 
     mreq.imr_multiaddr.s_addr=htonl(group);
     mreq.imr_interface.s_addr=htonl(INADDR_ANY);
-  	
+      
    if (!IN_MULTICAST(ntohl(mreq.imr_multiaddr.s_addr))) {
         /* XXX raise an exception here instead of exit - avsm */
-	    fprintf(stderr, "given address '%s' is not multicast\n",inet_ntoa(mreq.imr_multiaddr));
-    	exit(1);
+        fprintf(stderr, "given address '%s' is not multicast\n",inet_ntoa(mreq.imr_multiaddr));
+        exit(1);
    }
   
    r = setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *) &mreq, sizeof(mreq));
