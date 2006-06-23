@@ -1,12 +1,5 @@
-depend:
-	cd mpl && ${MAKE} depend
-	cd spl && ${MAKE} depend
+SUBDIRS=mpl spl
 
 all:
-	cd mpl && ${MAKE} all
-	cd spl && ${MAKE} all
-
-clean:
-	cd mpl && ${MAKE} clean
-	cd spl && ${MAKE} clean
-
+%:
+	for i in $(SUBDIRS); do (cd $$i && $(MAKE) $@); done

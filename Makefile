@@ -1,14 +1,12 @@
-depend:
-	cd lib && ${MAKE} depend
-	cd tools && ${MAKE} depend
+SUBDIRS=lib tools apps
 
-all:
-	cd lib && ${MAKE}
-	cd tools && ${MAKE}
+world:
+	$(MAKE) clean
+	$(MAKE) depend
+	$(MAKE) all
 
-clean:
-	cd lib && ${MAKE} clean
-	cd tools && ${MAKE} clean
+%:
+	for i in $(SUBDIRS); do (cd $$i && $(MAKE) $@); done
 
 install:
 	@echo Not done yet, sorry!

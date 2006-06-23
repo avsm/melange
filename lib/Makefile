@@ -1,15 +1,6 @@
-depend:
-	cd ounix && ${MAKE} depend
-	cd ssh && ${MAKE} depend
-	cd dns && ${MAKE} depend
+SUBDIRS=ounix ipv4 ethernet udp dhcp pcap ounix ssh dns
 
 all:
-	cd ounix && ${MAKE} all
-	cd ssh && ${MAKE} all
-	cd dns && ${MAKE} all
-
-clean:
-	cd ounix && ${MAKE} clean
-	cd ssh && ${MAKE} clean
-	cd dns && ${MAKE} clean
+%:
+	for i in $(SUBDIRS); do (cd $$i && $(MAKE) $@); done
 

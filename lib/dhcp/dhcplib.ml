@@ -20,7 +20,7 @@ open Dhcp
 
 let parse_options env =
     let module M = Mpl_stdlib in
-    let cookie = M.Mpl_uint32.unmarshal env in
+    let _ (* cookie *) = M.Mpl_uint32.unmarshal env in
     let cont = ref true in
     let pos = ref (M.curpos env) in
     while !cont do

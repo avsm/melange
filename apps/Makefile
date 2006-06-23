@@ -1,12 +1,5 @@
-depend:
-	cd sshd && $(MAKE) depend
-	cd deens && $(MAKE) depend
+SUBDIRS=deens sshd
 
 all:
-	cd sshd && $(MAKE) all
-	cd deens && $(MAKE) all
-
-clean:
-	cd sshd && $(MAKE) clean
-	cd deens && $(MAKE) clean
-
+%:
+	for i in $(SUBDIRS); do (cd $$i && $(MAKE) $@); done
