@@ -1,1 +1,15 @@
 Stub, mail anil@recoil.org with questions
+
+Useful targets:
+
+$ make world
+	This will do a clean, dependency and full build
+
+$ make clean
+	Cleans all subdirectories
+
+$ make depend
+	Recursively builds dependencies
+
+$ make all
+	Builds all components
