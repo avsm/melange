@@ -14,7 +14,7 @@ SOURCES= olog.mli olog.ml  ssh_statecalls.ml ssh_message.ml \
 	ssh_transport.ml ssh_keys.ml \
 	ssh_kex.ml ssh_channel.mli ssh_channel.ml \
 	ssh_userauth.ml ssh_config.ml \
-	ssh_env.ml ssh_server.ml server.ml
+	ssh_env.ml ssh_server.ml
 RESULT= ssh
 #LIBS= unix nums cryptokit str ounix mpl_stdlib
 INCDIRS= ../ounix ../../tools/mpl
