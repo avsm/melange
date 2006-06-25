@@ -163,28 +163,25 @@ class virtual env conf =
     method private xmit (pack:Mpl_stdlib.env -> xmit) =
         let module TP = Ssh_transport.Packet in
         tx_seq_num := Int32.succ !tx_seq_num;
-        let () = TP.marshal ~block_size:transport.encrypt_block_size
+        Ssh_transport.Packet.marshal ~block_size:transport.encrypt_block_size
             ~padfn:(Cryptokit.Random.string conf.rng)
             ~cryptfn:transport.cryptfn
             ~macfn:transport.crypt_macfn
             ~splfn:(fun o -> self#tick_automaton o#xmit_statecall)
-            conf.fd pack in
-        ()
+            conf.fd pack
     
     method private xmit_channel (chan:Ssh_channel.channel) (pack:Mpl_stdlib.env -> xmit) =
-        let module TP = Ssh_transport.Packet in
         tx_seq_num := Int32.succ !tx_seq_num;
-        let () = TP.marshal ~block_size:transport.encrypt_block_size
+        Ssh_transport.Packet.marshal ~block_size:transport.encrypt_block_size
             ~padfn:(Cryptokit.Random.string conf.rng)
             ~cryptfn:transport.cryptfn
             ~macfn:transport.crypt_macfn
             ~splfn:(fun o -> chan#tick_automaton o#xmit_statecall)
-            conf.fd pack in
-        ()
+            conf.fd pack
 
     method private read_ssh_packet =
         let module C = Ssh_classify in
-        let _ = try
+        try
             match self#recv with
             |C.DHGexSHA1 x ->
                 if log#debug_active then Ssh_message.Dhgexsha1.prettyprint x;
@@ -211,8 +208,6 @@ class virtual env conf =
                 connection_active <- false
             |Unix.Unix_error _ ->
                 connection_active <- false
-            
-        in ()
 
     (* Virtual methods to handle the different packet types *)
     method virtual dispatch_dhgexsha1_packet : Ssh_message.Dhgexsha1.o -> unit
