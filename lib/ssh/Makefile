@@ -16,9 +16,8 @@ SOURCES= olog.mli olog.ml  ssh_statecalls.ml ssh_message.ml \
 	ssh_userauth.ml ssh_config.ml \
 	ssh_env.ml ssh_server.ml
 RESULT= ssh
-#LIBS= unix nums cryptokit str ounix mpl_stdlib
-INCDIRS= ../ounix ../../tools/mpl
-LIBDIRS= ../ounix ../../tools/mpl
+INCDIRS= ../ounix ../../tools/mpl ../../tools/spl
+LIBDIRS= ../ounix ../../tools/mpl ../../tools/spl
 SPL_SRC= ssh_server_automaton.spl ssh_server_channel.spl
 TRASH=	ssh_server_automaton.ml ssh_server_automaton.mli \
 	ssh_client_automaton.ml ssh_client_automaton.mli \

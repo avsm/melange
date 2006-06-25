@@ -31,25 +31,11 @@ class channel
     val mutable pty = None
 
     val mutable automaton =
-(*
-        let s = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
-        Unix.setsockopt s Unix.SO_REUSEADDR true;
-        Unix.bind s (Unix.ADDR_INET(Unix.inet_addr_any,1235));
-        Unix.listen s 5;
-        let sock_factory () =
-            prerr_endline "in sock_factory accept";
-            let fd,_ = Unix.accept s in
-            let ic = Unix.in_channel_of_descr fd in
-            let oc = Unix.out_channel_of_descr fd in
-            oc,ic
-        in
-        *)
         let auto = Ssh_server_channel.init () in
-        (*
-        let oc,_ = sock_factory () in
+        let sf = Spl_stdlib.get_tcp_sock_factory 1235 in
+        let oc,_ = sf () in
         Ssh_server_channel.pagefn oc;
-        Ssh_server_channel.set_cfn auto sock_factory;
-        *)
+        Ssh_server_channel.set_cfn auto sf;
         auto
    
     method automaton = automaton
@@ -179,7 +165,7 @@ class channel_env = object(self)
     method progress_halfchans (chan:channel) v =
         try
             let x = Hashtbl.find halfchans chan#our_id in
-            let _ = match x.confirm with
+            let () = match x.confirm with
             |(None,None) -> begin
                 (* If we requested pty confirm it, else confirm exec *)
                 match x.pty with
