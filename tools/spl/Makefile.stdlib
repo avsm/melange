@@ -1,0 +1,10 @@
+OCAMLMAKEFILE = ../../OCamlMakefile
+ 
+SOURCES = spl_stdlib.mli spl_stdlib.ml
+LIBS = unix str
+RESULT = spl_stdlib
+all: ncl dcl
+
+depend:
+
+include $(OCAMLMAKEFILE)
