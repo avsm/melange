@@ -1,5 +1,6 @@
 (*
  * Copyright (c) 2005,2006 Anil Madhavapeddy <anil@recoil.org>
+ * Copyright (c) 2006 David Scott <dave@recoil.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,18 +19,54 @@
 
 open Unix
 
-(* External C bindings *)
-external set_tcp_nodelay : Unix.file_descr -> bool -> unit =
+module Bindings = struct
+  (* External C bindings; not to be exposed outside this file *)
+  external set_tcp_nodelay : Unix.file_descr -> bool -> unit =
     "ounix_set_tcp_nodelay"
-
-external set_ip_multicast_ttl : Unix.file_descr -> int -> int =
+      
+  external set_ip_multicast_ttl : Unix.file_descr -> int -> int =
     "ounix_set_ip_multicast_ttl"
-
-external set_ip_multicast_loop : Unix.file_descr -> int -> int =
+      
+  external set_ip_multicast_loop : Unix.file_descr -> int -> int =
     "ounix_set_ip_multicast_loop"
-
-external join_multicast_group : Unix.file_descr -> int -> int -> int =
+      
+  external join_multicast_group : Unix.file_descr -> int -> int -> int =
     "ounix_join_multicast_group"
+end      
+
+(** Set or unset the TCP_NODELAY flag on a fd *)
+let set_tcp_nodelay = Bindings.set_tcp_nodelay
+
+(** Set the multicast TTL on an fd to x *)
+let set_ip_multicast_ttl fd x = 
+  if Bindings.set_ip_multicast_ttl fd x < 0
+  then failwith (Printf.sprintf "Unable to set multicast TTL := %d" x)
+
+(** Set the IP_MULTICAST_LOOP on an fd to x *)
+let set_ip_multicast_ttl fd x = 
+  if Bindings.set_ip_multicast_loop fd x < 0
+  then failwith (Printf.sprintf "Unable to set IP_MULTICAST_LOOP := %d" x)
+
+(** Add the fd to the multicast group with address addr *)
+let join_multicast_group fd addr = 
+  (** Take an inet_addr and return an array of ints eg [| 127; 0; 0; 1 |] *)
+  let octets_of_addr addr = 
+    let s = Unix.string_of_inet_addr addr in
+    let a = String.index_from s 0 '.' in
+    let b = String.index_from s (a+1) '.' in
+    let c = String.index_from s (b+1) '.' in
+    Array.map int_of_string 
+      [| String.sub s 0 a; 
+	 String.sub s (a + 1) (b - a - 1);
+	 String.sub s (b + 1) (c - b - 1); 
+	 String.sub s (c + 1) (String.length s - c - 1) |] in
+  (* Make into 16-bit words for transmission into the C bindings *)
+  let octets = octets_of_addr addr in
+  let msw = (octets.(0) lsl 8) lor octets.(1)
+  and lsw = (octets.(2) lsl 8) lor octets.(3) in
+  if Bindings.ml_join_multicast_group fd msw lsw < 0
+  then failwith (Printf.sprintf "Unable to join multicast group"
+
 
 class type odescr = object
     method fd : file_descr

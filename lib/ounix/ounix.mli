@@ -1,3 +1,15 @@
+(** Set or unset the TCP_NODELAY flag on a fd *)
+val set_tcp_nodelay : Unix.file_descr -> bool -> unit
+
+(** Set the multicast TTL on an fd to x *)
+val set_ip_multicast_ttl : Unix.file_descriptor -> int -> unit
+
+(** Set the IP_MULTICAST_LOOP on an fd to x *)
+val set_ip_multicast_ttl : Unix.file_descriptor -> int -> unit
+
+(** Add the fd to the multicast group with address addr *)
+val join_multicast_group : Unix.file_descriptor -> Unix.inet_addr -> unit
+
 class type odescr =
   object
     method close : unit
