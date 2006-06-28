@@ -1,4 +1,4 @@
-SUBDIR=cryptokit
+SUBDIR=cryptokit getopt
 
 all:
 %:

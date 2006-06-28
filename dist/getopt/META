@@ -1,0 +1,4 @@
+requires = ""
+version = "20040420"
+archive(byte) = "getopt.cma"
+archive(native) = "getopt.cmxa"
