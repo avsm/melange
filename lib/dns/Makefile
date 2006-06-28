@@ -13,7 +13,8 @@ LIBDIRS= ../ounix ../../tools/mpl
 INCDIRS= ../ounix ../../tools/mpl
 TRASH=dns.ml dns_rr.ml
 
-all: ncl bcl
+native: ncl
+bytecode: bcl
 
 depend:
 	cd ../../tools/mpl && ${MAKE} depend all

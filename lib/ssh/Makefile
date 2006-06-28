@@ -16,15 +16,17 @@ SOURCES= olog.mli olog.ml  ssh_statecalls.ml ssh_message.ml \
 	ssh_userauth.ml ssh_config.ml \
 	ssh_env.ml ssh_server.ml
 RESULT= ssh
-INCDIRS= ../ounix ../../tools/mpl ../../tools/spl
+INCDIRS= ../ounix ../../tools/mpl ../../tools/spl +cryptokit +numerix
 LIBDIRS= ../ounix ../../tools/mpl ../../tools/spl
+LIBS=
 SPL_SRC= ssh_server_automaton.spl ssh_server_channel.spl
 TRASH=	ssh_server_automaton.ml ssh_server_automaton.mli \
 	ssh_client_automaton.ml ssh_client_automaton.mli \
 	ssh_server_channel.ml ssh_server_channel.mli \
 	ssh_statecalls.ml
 
-all: ncl bcl
+native: ncl
+bytecode: bcl
 
 include $(OCAMLMAKEFILE)
 
