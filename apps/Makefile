@@ -1,4 +1,4 @@
-SUBDIRS=deens sshd
+SUBDIRS=deens sshd bonjour
 
 native:
 bytecode:

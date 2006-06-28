@@ -30,9 +30,28 @@ let connect () =
   (* Join the socket to the multicast group *)
   Ounix.set_ip_multicast_ttl s 1;
   Ounix.set_ip_multicast_loop s 1;
-  Ounix.join_multicast_group s addr;
+  Ounix.join_multicast_group s (Unix.inet_addr_of_string ip);
   s
 
 (** Query which returns all services on the network *)
-let all_services = "_services._dns-sd._udp.local"
+let all_services = [ "_services"; "_dns-sd"; "_udp"; "local" ]
+
+let next_transaction_id = 
+    let id = ref 0 in
+    fun () ->
+        let result = !id in
+        id := !id + 1;
+        result mod 65536
+
+open Dns
+open Dns_rr
+
+let simple_lookup qtype qname = 
+    let qs = [Dns.Questions.t ~qname:qname ~qtype:qtype ~qclass:`IN] in
+
+    Dns.t ~id:(next_transaction_id())
+          ~qr:`Query ~opcode:`Query ~authoritative:0 ~rcode:`NoError
+          ~truncation:0 ~rd:1 ~ra:0 
+          ~questions:qs ~answers:[] ~authority:[] ~additional:[]
+
 
