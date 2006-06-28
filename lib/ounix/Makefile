@@ -8,6 +8,9 @@ LIBS = unix
 
 depend:
 
-all: ncl dcl
+native: ncl
+bytecode: bcl
+
+all: native bytecode
 
 include $(OCAMLMAKEFILE)

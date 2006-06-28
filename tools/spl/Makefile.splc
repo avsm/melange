@@ -14,6 +14,9 @@ LIBS= str
 
 depend:
 
-all: nc dc
+native: nc
+bytecode: bc
+
+all: native bytecode
 
 include $(OCAMLMAKEFILE)

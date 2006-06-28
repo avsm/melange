@@ -1,5 +1,7 @@
 depend:
 
+native:
+bytecode:
 all:
 	${MAKE} -f Makefile.mplc all
 	${MAKE} -f Makefile.stdlib all

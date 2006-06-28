@@ -8,7 +8,8 @@ LIBDIRS= ../ounix $(MPL)
 INCDIRS= ../ounix $(MPL)
 TRASH= dhcp.ml
 
-all: ncl bcl
+native: ncl
+bytecode: bcl
 
 depend:
 	cd ../../tools/mpl && ${MAKE} depend all

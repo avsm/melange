@@ -14,8 +14,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <util.h>
 #include <termios.h>
+
+#if defined(linux)
+#  include <sys/ioctl.h>
+#  include <pty.h>
+#else
+#  include <util.h>
+#endif
+
 #include <stdio.h>
 #include <errno.h>
 #include <paths.h>
