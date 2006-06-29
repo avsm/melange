@@ -16,6 +16,16 @@
  * $Id:$
  *)
 
+(** Convert a dotted DNS name into a string list
+    eg "www.example.com" -> [ "www"; "example"; "com" ] *)
+let rec dns_name_of_string x = 
+  try
+    let i = String.index x '.' in
+    let left = String.sub x 0 i
+    and right = String.sub x (i+1) (String.length x - i - 1) in
+    left :: (dns_name_of_string right)
+  with Not_found -> [ x ]
+
 (** Temporary function which sends a query up to 'maxtries' tries at 
     intervals of 'interval'. We probably need something more sophisticated
     able to handle (i) multiple requests; (ii) different backoff strategies *)
@@ -36,28 +46,101 @@ let do_query s send_query_fn receive_fn maxtries interval maxwait =
 module M = Mpl_stdlib
 open Dns
 
+(** Bonjour query to list all the services running on a network *)
+let all_services = Bonjour.simple_lookup `PTR Bonjour.all_services
+
+(** Program is single threaded; use static packet buffers for simplicity *)
+let send_env = M.new_env (String.make 4000 '\000') 
+let recv_env = M.new_env (String.make 4000 '\000') 
+
+(** Helper function to send a query out a socket via the send_env *)
+let send_query q s = 
+  M.reset send_env;
+  M.Mpl_dns_label.init_marshal send_env;
+  ignore(q send_env);
+  M.env_send_fn send_env (fun buf off len -> 
+			    let len = Unix.sendto s buf off len [] Bonjour.addr in
+			    ())
+    
+(** Helper function to receive a response from a socket via the recv_env *)
+let receive_response s = 
+  M.reset recv_env;
+  M.Mpl_dns_label.init_unmarshal recv_env;
+  M.env_recv_fn recv_env (fun buf off len -> Unix.recvfrom s buf off len []);
+  Dns.unmarshal recv_env 
+
+(** A set of DNS names (string lists) *)
+module NameSet = Set.Make(struct type t = string list let compare = Pervasives.compare end)
+
+(** Generate set of all available service names *)
+let fetch_all_services s : NameSet.t = 
+  let x = do_query s (send_query all_services) receive_response 10 1. 10. in
+  (* Take each of the answers *)
+  let answers = List.concat (List.map (fun x -> Array.to_list x#answers) x) in
+  (* Extract the RRs *)
+  let rrs = List.map (fun x -> x#rr) answers in
+  (* Extract the PTR RRs *)
+  let names = List.map (function `PTR x -> Some x#ptrdname | _ -> None ) rrs in
+  List.fold_left (fun set elt -> match elt with
+		  | Some x -> NameSet.add x set | None -> set) NameSet.empty names
+
+(** An individual service is described by one of these: *)
+type service_location = {
+    host: string list;
+    port: int;
+    txt: string list
+}
+
+(** A set of service_location records *)
+module SLSet = Set.Make(struct type t = service_location let compare = Pervasives.compare end)
+
+(** Send a query for one particular service, return a set of service_location records *)
+let find_one_service s name = 
+  let query = Bonjour.simple_lookup `PTR name in
+  let x = do_query s (send_query query) receive_response 10 1. 10. in
+  let sls = List.map (fun response -> 
+	       (* The hostname is a RR in the ANSWER section *)
+	       let host = match response#answers with
+		 | [| answer |] -> begin match answer#rr with
+		   | `PTR ptr -> ptr#ptrdname
+		   | _ -> []
+		   end
+		 | _ -> [] in
+	       (* SRV and TXT RRs are in the additionals *)
+	       let rrs = List.map (fun x -> x#rr) (Array.to_list response#additional) in
+	       let port = match (List.filter (function `SRV _ -> true | _ -> false) rrs) with
+		 | `SRV srv :: _ -> srv#port
+		 | _ -> 0 in
+	       let txt = match (List.filter (function `TXT _ -> true | _ -> false) rrs) with
+		 | `TXT txt :: _ -> txt#data
+		 | _ -> "" in
+	       { host = host; port = port; txt = [ txt ]  }
+	   ) x in
+  List.fold_left (fun set elt -> SLSet.add elt set) SLSet.empty sls
+
+
 let _ = 
-    let senv = M.new_env (String.make 4000 '\000') in
-    let env = M.new_env (String.make 4000 '\000') in
+  let query_allservices = ref true in
+  let query_single = ref "" in
+  Arg.parse [ 
+    "-all", Arg.Set query_allservices,
+    Printf.sprintf "query all network services (default %b)" !query_allservices;
+    "-query", Arg.String (fun x -> query_single := x; query_allservices := false),
+    "send queries for a single service (eg _ssh._tcp.local)"
+  ]
+    (fun x -> output_string stderr ("Ignoring argument: " ^ x))
+    "generate mDNS/Bonjour queries";
 
-    let send_query q s = 
-        print_endline "Sending query...";
-        M.reset senv;
-        M.Mpl_dns_label.init_marshal senv;
-        ignore(Bonjour.simple_lookup `PTR q senv);
-        M.env_send_fn senv (fun buf off len -> 
-            Printf.printf "sending %d bytes\n" len;
-            let len = Unix.sendto s buf off len [] Bonjour.addr in
-            Printf.printf "  returned %d\n" len) in
-         
-    let receive_response s = 
-        print_endline "Receiving response...\n";
-        M.reset env;
-        M.Mpl_dns_label.init_unmarshal env;
-        M.env_recv_fn env (fun buf off len -> Unix.recvfrom s buf off len []);
-        Dns.unmarshal env in
+  let s = Bonjour.connect () in  
+  if !query_allservices then begin
+    let all = fetch_all_services s in
+    print_endline "List of unique service names found on the network:";
+    NameSet.iter (fun name -> print_endline (String.concat "." name)) all
+  end else if !query_single <> "" then begin
+    let all = find_one_service s (dns_name_of_string !query_single) in
+    print_endline ("Results for " ^ !query_single);
+    SLSet.iter (fun x -> 
+		  print_endline ("  " ^ (String.concat "." x.host) ^ " : " ^ (string_of_int x.port));
+		  List.iter (fun x -> print_endline ("    " ^ x)) x.txt) all
 
-    let s = Bonjour.connect () in
-    let x = do_query s (send_query Bonjour.all_services) receive_response 10 1. 10. in
-    List.iter (fun x -> x#prettyprint) x
-        
+  end
