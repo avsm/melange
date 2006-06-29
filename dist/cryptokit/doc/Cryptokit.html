@@ -1,0 +1,300 @@
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<link rel="Start" href="index.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of class methods" rel=Appendix href="index_methods.html">
+<link title="Index of classes" rel=Appendix href="index_classes.html">
+<link title="Index of class types" rel=Appendix href="index_class_types.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Cryptokit" rel="Chapter" href="Cryptokit.html"><link title="General-purpose abstract interfaces" rel="Section" href="#6_Generalpurposeabstractinterfaces">
+<link title="Utilities: random numbers and padding schemes" rel="Section" href="#6_Utilitiesrandomnumbersandpaddingschemes">
+<link title="Cryptographic primitives (simplified interface)" rel="Section" href="#6_Cryptographicprimitivessimplifiedinterface">
+<link title="Advanced, compositional interface to block ciphers 
+       and stream ciphers" rel="Section" href="#6_Advancedcompositionalinterfacetoblockciphersandstreamciphers">
+<link title="Encoding and compression of data" rel="Section" href="#6_Encodingandcompressionofdata">
+<link title="Error reporting" rel="Section" href="#6_Errorreporting">
+<link title="Miscellaneous utilities" rel="Section" href="#6_Miscellaneousutilities">
+<title>Cryptokit</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a href="index.html">Up</a>
+&nbsp;</div>
+<center><h1>Module <a href="type_Cryptokit.html">Cryptokit</a></h1></center>
+<br>
+<pre><span class="keyword">module</span> Cryptokit: <code class="code">sig</code> <a href="Cryptokit.html">..</a> <code class="code">end</code></pre>The Cryptokit library provides a variety of cryptographic primitives
+    that can be used to implement cryptographic protocols in
+    security-sensitive applications.  The primitives provided include:<ul>
+<li>Symmetric-key ciphers: AES, DES, Triple-DES, ARCfour,
+      in ECB, CBC, CFB and OFB modes.</li>
+<li>Public-key cryptography: RSA encryption, Diffie-Hellman key agreement.</li>
+<li>Hash functions and MACs: SHA-1, MD5, and MACs based on AES and DES.</li>
+<li>Random number generation.</li>
+<li>Encodings and compression: base 64, hexadecimal, Zlib compression.</li>
+</ul>
+
+    To use this library, link with 
+      <code class="code">ocamlc unix.cma nums.cma cryptokit.cma</code>
+    or
+      <code class="code">ocamlopt unix.cmxa nums.cmxa cryptokit.cmxa</code>.<br>
+<hr width="100%">
+<br>
+<a name="6_Generalpurposeabstractinterfaces"></a>
+<h6>General-purpose abstract interfaces</h6><br>
+<pre><span class="keyword">class type</span> <a name="TYPEtransform"></a><a href="Cryptokit.transform.html">transform</a> = <code class="code">object</code> <a href="Cryptokit.transform.html">..</a> <code class="code">end</code></pre><div class="info">
+A <i>transform</i> is an arbitrary mapping from sequences of characters
+    to sequences of characters.
+</div>
+<pre><span class="keyword">val</span> <a name="VALtransform_string"></a>transform_string : <code class="type"><a href="Cryptokit.transform.html">transform</a> -> string -> string</code></pre><div class="info">
+<code class="code">transform_string t s</code> runs the string <code class="code">s</code> through the
+      transform <code class="code">t</code> and returns the transformed string.
+      The transform <code class="code">t</code> is wiped before returning, hence can
+      no longer be used for further transformations.<br>
+</div>
+<pre><span class="keyword">val</span> <a name="VALtransform_channel"></a>transform_channel : <code class="type"><a href="Cryptokit.transform.html">transform</a> -><br>       ?len:int -> Pervasives.in_channel -> Pervasives.out_channel -> unit</code></pre><div class="info">
+<code class="code">transform_channel t ic oc</code> reads characters from input channel <code class="code">ic</code>,
+      runs them through the transform <code class="code">t</code>, and writes the transformed
+      data to the output channel <code class="code">oc</code>.  If the optional <code class="code">len</code> argument
+      is provided, exactly <code class="code">len</code> characters are read from <code class="code">ic</code> and
+      transformed; <code class="code">End_of_file</code> is raised if <code class="code">ic</code> does not contain
+      at least <code class="code">len</code> characters.  If <code class="code">len</code> is not provided, <code class="code">ic</code> is
+      read all the way to end of file. 
+      The transform <code class="code">t</code> is wiped before returning, hence can
+      no longer be used for further transformations.<br>
+</div>
+<pre><span class="keyword">val</span> <a name="VALcompose"></a>compose : <code class="type"><a href="Cryptokit.transform.html">transform</a> -> <a href="Cryptokit.transform.html">transform</a> -> <a href="Cryptokit.transform.html">transform</a></code></pre><div class="info">
+Compose two transforms, feeding the output of the first transform
+      to the input of the second transform.<br>
+</div>
+<pre><span class="keyword">class type</span> <a name="TYPEhash"></a><a href="Cryptokit.hash.html">hash</a> = <code class="code">object</code> <a href="Cryptokit.hash.html">..</a> <code class="code">end</code></pre><div class="info">
+A <i>hash</i> is a function that maps arbitrarily-long character
+    sequences to small, fixed-size strings.
+</div>
+<pre><span class="keyword">val</span> <a name="VALhash_string"></a>hash_string : <code class="type"><a href="Cryptokit.hash.html">hash</a> -> string -> string</code></pre><div class="info">
+<code class="code">hash_string h s</code> runs the string <code class="code">s</code> through the hash function <code class="code">h</code>
+      and returns the hash value of <code class="code">s</code>.  
+      The hash <code class="code">h</code> is wiped before returning, hence can
+      no longer be used for further hash computations.<br>
+</div>
+<pre><span class="keyword">val</span> <a name="VALhash_channel"></a>hash_channel : <code class="type"><a href="Cryptokit.hash.html">hash</a> -> ?len:int -> Pervasives.in_channel -> string</code></pre><div class="info">
+<code class="code">hash_channel h ic</code> reads characters from the input channel <code class="code">ic</code>,
+      computes their hash value and returns it.
+      If the optional <code class="code">len</code> argument is provided, exactly <code class="code">len</code> characters
+      are read from <code class="code">ic</code> and hashed; <code class="code">End_of_file</code> is raised if <code class="code">ic</code>
+      does not contain at least <code class="code">len</code> characters.
+      If <code class="code">len</code> is not provided, <code class="code">ic</code> is read all the way to end of file.      
+      The hash <code class="code">h</code> is wiped before returning, hence can
+      no longer be used for further hash computations.<br>
+</div>
+<br>
+<a name="6_Utilitiesrandomnumbersandpaddingschemes"></a>
+<h6>Utilities: random numbers and padding schemes</h6><br>
+<pre><span class="keyword">module</span> <a href="Cryptokit.Random.html">Random</a>: <code class="code">sig</code> <a href="Cryptokit.Random.html">..</a> <code class="code">end</code></pre><div class="info">
+The <code class="code">Random</code> module provides random and pseudo-random number generators
+    suitable for generating cryptographic keys, nonces, or challenges.
+</div>
+<pre><span class="keyword">module</span> <a href="Cryptokit.Padding.html">Padding</a>: <code class="code">sig</code> <a href="Cryptokit.Padding.html">..</a> <code class="code">end</code></pre><div class="info">
+The <code class="code">Padding</code> module defines a generic interface
+    for padding input data to an integral number of blocks,
+    as well as two popular padding schemes.
+</div>
+<br>
+<a name="6_Cryptographicprimitivessimplifiedinterface"></a>
+<h6>Cryptographic primitives (simplified interface)</h6><br>
+<pre><span class="keyword">module</span> <a href="Cryptokit.Cipher.html">Cipher</a>: <code class="code">sig</code> <a href="Cryptokit.Cipher.html">..</a> <code class="code">end</code></pre><div class="info">
+The <code class="code">Cipher</code> module implements the AES, DES, Triple-DES and ARCfour
+    symmetric ciphers.
+</div>
+<pre><span class="keyword">module</span> <a href="Cryptokit.Hash.html">Hash</a>: <code class="code">sig</code> <a href="Cryptokit.Hash.html">..</a> <code class="code">end</code></pre><div class="info">
+The <code class="code">Hash</code> module implements unkeyed cryptographic hashes (SHA-1,
+    SHA-256, RIPEMD-160 and MD5), also known as message digest functions.
+</div>
+<pre><span class="keyword">module</span> <a href="Cryptokit.MAC.html">MAC</a>: <code class="code">sig</code> <a href="Cryptokit.MAC.html">..</a> <code class="code">end</code></pre><div class="info">
+The <code class="code">MAC</code> module implements message authentication codes, also
+    known as keyed hash functions.
+</div>
+<pre><span class="keyword">module</span> <a href="Cryptokit.RSA.html">RSA</a>: <code class="code">sig</code> <a href="Cryptokit.RSA.html">..</a> <code class="code">end</code></pre><div class="info">
+The <code class="code">RSA</code> module implements RSA public-key cryptography.
+</div>
+<pre><span class="keyword">module</span> <a href="Cryptokit.DH.html">DH</a>: <code class="code">sig</code> <a href="Cryptokit.DH.html">..</a> <code class="code">end</code></pre><div class="info">
+The <code class="code">DH</code> module implements Diffie-Hellman key agreement.
+</div>
+<br>
+<a name="6_Advancedcompositionalinterfacetoblockciphersandstreamciphers"></a>
+<h6>Advanced, compositional interface to block ciphers 
+       and stream ciphers</h6><br>
+<pre><span class="keyword">module</span> <a href="Cryptokit.Block.html">Block</a>: <code class="code">sig</code> <a href="Cryptokit.Block.html">..</a> <code class="code">end</code></pre><div class="info">
+The <code class="code">Block</code> module provides classes that implements
+    popular block ciphers, chaining modes, and wrapping of a block cipher
+    as a general transform or as a hash function.
+</div>
+<pre><span class="keyword">module</span> <a href="Cryptokit.Stream.html">Stream</a>: <code class="code">sig</code> <a href="Cryptokit.Stream.html">..</a> <code class="code">end</code></pre><div class="info">
+The <code class="code">Stream</code> module provides classes that implement
+    the ARCfour stream cipher, and the wrapping of a stream cipher
+    as a general transform.
+</div>
+<br>
+<a name="6_Encodingandcompressionofdata"></a>
+<h6>Encoding and compression of data</h6><br>
+<pre><span class="keyword">module</span> <a href="Cryptokit.Base64.html">Base64</a>: <code class="code">sig</code> <a href="Cryptokit.Base64.html">..</a> <code class="code">end</code></pre><div class="info">
+The <code class="code">Base64</code> module supports the encoding and decoding of
+    binary data in base 64 format, using only alphanumeric
+    characters that can safely be transmitted over e-mail or
+    in URLs.
+</div>
+<pre><span class="keyword">module</span> <a href="Cryptokit.Hexa.html">Hexa</a>: <code class="code">sig</code> <a href="Cryptokit.Hexa.html">..</a> <code class="code">end</code></pre><div class="info">
+The <code class="code">Hexa</code> module supports the encoding and decoding of
+    binary data as hexadecimal strings.
+</div>
+<pre><span class="keyword">module</span> <a href="Cryptokit.Zlib.html">Zlib</a>: <code class="code">sig</code> <a href="Cryptokit.Zlib.html">..</a> <code class="code">end</code></pre><div class="info">
+The <code class="code">Zlib</code> module supports the compression and decompression
+    of data, using the <code class="code">zlib</code> library.
+</div>
+<br>
+<a name="6_Errorreporting"></a>
+<h6>Error reporting</h6><br>
+<br><code><span class="keyword">type</span> <a name="TYPEerror"></a><code class="type"></code>error = </code><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Wrong_key_size</span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><code>The key is too long or too short for the given cipher.</code></td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Wrong_IV_size</span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><code>The initialization vector does not have the same size as
+          the block size.</code></td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Wrong_data_length</span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><code>The total length of the input data for a transform is not an
+          integral multiple of the input block size.</code></td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Bad_padding</span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><code>Incorrect padding bytes were found after decryption.</code></td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Output_buffer_overflow</span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><code>The output buffer for a transform exceeds the maximal length
+          of a Caml string.</code></td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Incompatible_block_size</span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><code>A combination of two block ciphers was attempted whereby
+          the ciphers have different block sizes, while they must have
+          the same.</code></td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Number_too_long</span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><code>Denotes an internal error in RSA key generation or encryption.</code></td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Seed_too_short</span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><code>The seed given to a pseudo random number generator is too short.</code></td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Message_too_long</span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><code>The message passed to RSA encryption or decryption is greater
+          than the modulus of the RSA key</code></td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Bad_encoding</span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><code>Illegal characters were found in an encoding of binary data
+          such as base 64 or hexadecimal.</code></td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Compression_error</span> <span class="keyword">of</span> <code class="type">string * string</code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><code>Error during compression or decompression.</code></td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">No_entropy_source</span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><code>No entropy source (OS, <code class="code">/dev/random</code> or EGD) was found for
+          <a href="Cryptokit.Random.html#VALsecure_rng"><code class="code">Cryptokit.Random.secure_rng</code></a>.</code></td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Entropy_source_closed</span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><code>End of file on a device or EGD entropy source.</code></td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span class="constructor">Compression_not_supported</span></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><code>The data compression functions are not available.</code></td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+<div class="info">
+Error codes for this library.<br>
+</div>
+
+<pre><span class="keyword">exception</span> <a name="EXCEPTIONError"></a>Error <span class="keyword">of</span> <code class="type"><a href="Cryptokit.html#TYPEerror">error</a></code></pre>
+<div class="info">
+Exception raised by functions in this library
+      to report error conditions.<br>
+</div>
+<br>
+<a name="6_Miscellaneousutilities"></a>
+<h6>Miscellaneous utilities</h6><br>
+<pre><span class="keyword">val</span> <a name="VALwipe_string"></a>wipe_string : <code class="type">string -> unit</code></pre><div class="info">
+<code class="code">wipe_string s</code> overwrites <code class="code">s</code> with zeroes.  Can be used
+        to reduce the memory lifetime of sensitive data.<br>
+</div>
+<pre><span class="keyword">val</span> <a name="VALxor_string"></a>xor_string : <code class="type">string -> int -> string -> int -> int -> unit</code></pre><div class="info">
+<code class="code">xor_string src spos dst dpos len</code> performs the xor (exclusive or)
+        of characters <code class="code">spos, ..., spos + len - 1</code> of <code class="code">src</code>
+        with characters <code class="code">dpos, ..., dpos + len - 1</code> of <code class="code">dst</code>,
+        storing the result in <code class="code">dst</code> starting at position <code class="code">dpos</code>.<br>
+</div>
+<pre><span class="keyword">val</span> <a name="VALmod_power"></a>mod_power : <code class="type">string -> string -> string -> string</code></pre><div class="info">
+<code class="code">mod_power a b c</code> computes <code class="code">a^b mod c</code>, where the
+        strings <code class="code">a</code>, <code class="code">b</code>, <code class="code">c</code> and the result string are viewed as
+        arbitrary-precision integers in big-endian format.
+        Requires <code class="code">a &lt; c</code>.<br>
+</div>
+<pre><span class="keyword">val</span> <a name="VALmod_mult"></a>mod_mult : <code class="type">string -> string -> string -> string</code></pre><div class="info">
+<code class="code">mod_mult a b c</code> computes <code class="code">a*b mod c</code>, where the
+        strings <code class="code">a</code>, <code class="code">b</code>, <code class="code">c</code> and the result string are viewed as
+        arbitrary-precision integers in big-endian format.<br>
+</div>
+</body></html>

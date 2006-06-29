@@ -6,7 +6,7 @@ MPLC= ../../tools/mpl/mplc
 SOURCES= dns_rr.ml dns.ml hashcons.mli hashcons.ml \
 	dnsparameters.ml dnsrr.mli dnstrie.mli dnsrr.ml dnstrie.ml \
 	dnsquery.ml dnsloader.ml dnsparser.mli dnslexer.mll dnsparser.mly \
-	dnsserver.mli dnsserver.ml
+	dnsserver.mli dnsserver.ml bonjour.ml
 RESULT= dns
 #LIBS = unix str ounix mpl_stdlib
 LIBDIRS= ../ounix ../../tools/mpl

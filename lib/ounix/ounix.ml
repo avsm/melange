@@ -43,7 +43,7 @@ let set_ip_multicast_ttl fd x =
   then failwith (Printf.sprintf "Unable to set multicast TTL := %d" x)
 
 (** Set the IP_MULTICAST_LOOP on an fd to x *)
-let set_ip_multicast_ttl fd x = 
+let set_ip_multicast_loop fd x = 
   if Bindings.set_ip_multicast_loop fd x < 0
   then failwith (Printf.sprintf "Unable to set IP_MULTICAST_LOOP := %d" x)
 
@@ -64,8 +64,8 @@ let join_multicast_group fd addr =
   let octets = octets_of_addr addr in
   let msw = (octets.(0) lsl 8) lor octets.(1)
   and lsw = (octets.(2) lsl 8) lor octets.(3) in
-  if Bindings.ml_join_multicast_group fd msw lsw < 0
-  then failwith (Printf.sprintf "Unable to join multicast group"
+  if Bindings.join_multicast_group fd msw lsw < 0
+  then failwith (Printf.sprintf "Unable to join multicast group")
 
 
 class type odescr = object

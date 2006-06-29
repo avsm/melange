@@ -1,0 +1,11 @@
+all:
+	$(MAKE) all
+	$(MAKE) allopt
+
+depend:
+	$(MAKE) depend
+
+install:
+
+clean:
+	$(MAKE) clean

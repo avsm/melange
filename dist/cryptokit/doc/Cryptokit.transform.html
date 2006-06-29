@@ -1,0 +1,139 @@
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<link rel="Start" href="index.html">
+<link rel="next" href="Cryptokit.hash.html">
+<link rel="Up" href="Cryptokit.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of class methods" rel=Appendix href="index_methods.html">
+<link title="Index of classes" rel=Appendix href="index_classes.html">
+<link title="Index of class types" rel=Appendix href="index_class_types.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Cryptokit" rel="Chapter" href="Cryptokit.html"><title>Cryptokit.transform</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a href="Cryptokit.html">Up</a>
+&nbsp;<a href="Cryptokit.hash.html">Next</a>
+</div>
+<center><h1>Class type <a href="type_Cryptokit.transform.html">Cryptokit.transform</a></h1></center>
+<br>
+<pre><span class="keyword">class type</span> <a name="TYPEtransform"></a>transform = <code class="code">object</code> <a href="Cryptokit.transform.html">..</a> <code class="code">end</code></pre>A <i>transform</i> is an arbitrary mapping from sequences of characters
+    to sequences of characters.  Examples of transforms include
+    ciphering, deciphering, compression, decompression, and encoding
+    of binary data as text.  Input data to a transform is provided
+    by successive calls to the methods <code class="code">put_substring</code>, <code class="code">put_string</code>,
+    <code class="code">put_char</code> or <code class="code">put_byte</code>.  The result of transforming the input
+    data is buffered internally, and can be obtained via the
+    <code class="code">get_string</code>, <code class="code">get_substring</code>, <code class="code">get_char</code> and <code class="code">get_byte</code> methods.<br>
+<hr width="100%">
+<pre><span class="keyword">method</span> <a name="METHODput_substring"></a>put_substring : <code class="type">string -> int -> int -> unit</code></pre><div class="info">
+<code class="code">put_substring str pos len</code> processes <code class="code">len</code> characters of
+          string <code class="code">str</code>, starting at character number <code class="code">pos</code>,
+          through the transform.<br>
+</div>
+<pre><span class="keyword">method</span> <a name="METHODput_string"></a>put_string : <code class="type">string -> unit</code></pre><div class="info">
+<code class="code">put_string str</code> processes all characters of string <code class="code">str</code>
+          through the transform.<br>
+</div>
+<pre><span class="keyword">method</span> <a name="METHODput_char"></a>put_char : <code class="type">char -> unit</code></pre><div class="info">
+<code class="code">put_char c</code> processes character <code class="code">c</code> through the transform.<br>
+</div>
+<pre><span class="keyword">method</span> <a name="METHODput_byte"></a>put_byte : <code class="type">int -> unit</code></pre><div class="info">
+<code class="code">put_byte b</code> processes the character having code <code class="code">b</code>
+          through the transform. <code class="code">b</code> must be between <code class="code">0</code> and <code class="code">255</code>
+          inclusive.<br>
+</div>
+<pre><span class="keyword">method</span> <a name="METHODfinish"></a>finish : <code class="type">unit</code></pre><div class="info">
+Call method <code class="code">finish</code> to indicate that no further data will
+          be processed through the transform.  This causes the transform
+          to flush its internal buffers and perform all appropriate
+          finalization actions, e.g. add final padding.  Raise <code class="code">Error
+          Wrong_data_length</code> if the total length of input data
+          provided via the <code class="code">put_*</code> methods is not an integral number
+          of the input block size (see
+          <a href="Cryptokit.transform.html#METHODinput_block_size"><code class="code">Cryptokit.transform.input_block_size</code></a>).  After calling
+          <code class="code">finish</code>, the transform can no longer accept additional
+          data.  Hence, do not call any of the <code class="code">put_*</code> methods nor
+          <code class="code">flush</code> after calling <code class="code">finish</code>.<br>
+</div>
+<pre><span class="keyword">method</span> <a name="METHODflush"></a>flush : <code class="type">unit</code></pre><div class="info">
+<code class="code">flush</code> causes the transform to flush its internal buffers
+          and make all output processed up to this point available through
+          the <code class="code">get_*</code> methods.  
+          Raise <code class="code">Error Wrong_data_length</code> if the total length
+          of input data provided via the <code class="code">put_*</code> methods is not
+          an integral number of the input block size
+          (see <a href="Cryptokit.transform.html#METHODinput_block_size"><code class="code">Cryptokit.transform.input_block_size</code></a>).
+          (For padded block ciphers, the input block size used here
+          is that of the underlying block cipher, without the padding.)
+          Unlike method <code class="code">finish</code>, method <code class="code">flush</code> does not add final
+          padding and leaves the transform in a state where it can
+          still accept more input.<br>
+</div>
+<pre><span class="keyword">method</span> <a name="METHODavailable_output"></a>available_output : <code class="type">int</code></pre><div class="info">
+Return the number of characters of output currently available.
+          The output can be recovered with the <code class="code">get_*</code> methods.<br>
+</div>
+<pre><span class="keyword">method</span> <a name="METHODget_string"></a>get_string : <code class="type">string</code></pre><div class="info">
+Return a character string containing all output characters
+          available at this point.  The internal output buffer is emptied;
+          in other terms, all currently available output is consumed
+          (and returned to the caller) by a call to <code class="code">get_string</code>.<br>
+</div>
+<pre><span class="keyword">method</span> <a name="METHODget_substring"></a>get_substring : <code class="type">string * int * int</code></pre><div class="info">
+Return a triple <code class="code">(buf,pos,len)</code>, where <code class="code">buf</code> is the internal
+          output buffer for the transform, <code class="code">pos</code> the position of the
+          first character of available output, and <code class="code">len</code> the number of
+          characters of available output.  The string <code class="code">buf</code> will be
+          modified later, so the caller must immediately copy
+          characters <code class="code">pos</code> to <code class="code">pos+len-1</code> of <code class="code">buf</code> to some other
+          location.  The internal output buffer is emptied;
+          in other terms, all currently available output is consumed
+          (and returned to the caller) by a call to <code class="code">get_substring</code>.<br>
+</div>
+<pre><span class="keyword">method</span> <a name="METHODget_char"></a>get_char : <code class="type">char</code></pre><div class="info">
+Return the first character of output, and remove it from the
+          internal output buffer.  Raise <code class="code">End_of_file</code> if no output
+          is currently available.<br>
+</div>
+<pre><span class="keyword">method</span> <a name="METHODget_byte"></a>get_byte : <code class="type">int</code></pre><div class="info">
+Return the code of the first character of output,
+          and remove it from the internal output buffer.
+          Raise <code class="code">End_of_file</code> if no output is currently available.<br>
+</div>
+<pre><span class="keyword">method</span> <a name="METHODinput_block_size"></a>input_block_size : <code class="type">int</code></pre><div class="info">
+Some transforms (e.g. unpadded block ciphers) process
+          input data by blocks of several characters.  This method
+          returns the size of input blocks for the current transform.
+          If <code class="code">input_block_size &gt; 1</code>, the user of the transform
+          must ensure that the total length of input data provided
+          between the creation of the cipher and the call to
+          <code class="code">finish</code> is an integral multiple of <code class="code">input_block_size</code>.
+          If <code class="code">input_block_size = 1</code>, the transform can accept
+          input data of arbitrary length.<br>
+</div>
+<pre><span class="keyword">method</span> <a name="METHODoutput_block_size"></a>output_block_size : <code class="type">int</code></pre><div class="info">
+Some transforms (e.g. block ciphers) always produce output
+          data by blocks of several characters.  This method
+          returns the size of output blocks for the current transform.
+          If <code class="code">output_block_size &gt; 1</code>, the total length of output data
+          produced by the transform is always an integral multiple
+          of <code class="code">output_block_size</code>.
+          If <code class="code">output_block_size = 1</code>, the transform produces output data
+          of arbitrary length.<br>
+</div>
+<pre><span class="keyword">method</span> <a name="METHODwipe"></a>wipe : <code class="type">unit</code></pre><div class="info">
+Erase all internal buffers and data structures of this transform,
+          overwriting them with zeroes.  A transform may contain sensitive
+          data such as secret key-derived material, or parts of the
+          input or output data.  Calling <code class="code">wipe</code> ensures that this sensitive
+          data will not remain in memory longer than strictly necessary,
+          thus making invasive attacks more difficult.
+          It is thus prudent practice to call <code class="code">wipe</code> on every
+          transform that the program no longer needs.
+          After calling <code class="code">wipe</code>, the transform is no longer in a working
+          state: do not call any other methods after calling <code class="code">wipe</code>.<br>
+</div>
+</body></html>

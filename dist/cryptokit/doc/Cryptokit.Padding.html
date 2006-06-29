@@ -1,0 +1,41 @@
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Cryptokit.Random.html">
+<link rel="next" href="Cryptokit.Cipher.html">
+<link rel="Up" href="Cryptokit.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of class methods" rel=Appendix href="index_methods.html">
+<link title="Index of classes" rel=Appendix href="index_classes.html">
+<link title="Index of class types" rel=Appendix href="index_class_types.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Cryptokit" rel="Chapter" href="Cryptokit.html"><title>Cryptokit.Padding</title>
+</head>
+<body>
+<div class="navbar"><a href="Cryptokit.Random.html">Previous</a>
+&nbsp;<a href="Cryptokit.html">Up</a>
+&nbsp;<a href="Cryptokit.Cipher.html">Next</a>
+</div>
+<center><h1>Module <a href="type_Cryptokit.Padding.html">Cryptokit.Padding</a></h1></center>
+<br>
+<pre><span class="keyword">module</span> Padding: <code class="code">sig</code> <a href="Cryptokit.Padding.html">..</a> <code class="code">end</code></pre>The <code class="code">Padding</code> module defines a generic interface
+    for padding input data to an integral number of blocks,
+    as well as two popular padding schemes.<br>
+<hr width="100%">
+<pre><span class="keyword">class type</span> <a name="TYPEscheme"></a><a href="Cryptokit.Padding.scheme.html">scheme</a> = <code class="code">object</code> <a href="Cryptokit.Padding.scheme.html">..</a> <code class="code">end</code></pre><div class="info">
+Generic interface of a padding scheme.
+</div>
+<pre><span class="keyword">val</span> <a name="VALlength"></a>length : <code class="type"><a href="Cryptokit.Padding.scheme.html">scheme</a></code></pre><div class="info">
+This padding scheme pads data with <code class="code">n</code> copies of the character
+        having code <code class="code">n</code>.  The integer <code class="code">n</code> lies between 1 and the block
+        size (included).  This constraint ensures non-ambiguity.
+        This scheme is defined in RFC 2040 and in PKCS 5 and 7.<br>
+</div>
+<pre><span class="keyword">val</span> <a name="VAL_8000"></a>_8000 : <code class="type"><a href="Cryptokit.Padding.scheme.html">scheme</a></code></pre><div class="info">
+This padding scheme pads data with one <code class="code">0x80</code> byte, followed
+        by as many <code class="code">0</code> bytes as needed to fill the block.<br>
+</div>
+</body></html>

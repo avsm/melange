@@ -1,4 +1,4 @@
-SUBDIRS=lib tools apps
+SUBDIRS=dist lib tools apps
 
 world:
 	$(MAKE) clean

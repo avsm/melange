@@ -1,0 +1,213 @@
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of class methods" rel=Appendix href="index_methods.html">
+<link title="Index of classes" rel=Appendix href="index_classes.html">
+<link title="Index of class types" rel=Appendix href="index_class_types.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Cryptokit" rel="Chapter" href="Cryptokit.html"><title>Index of class methods</title>
+</head>
+<body>
+<center><h1>Index of class methods</h1></center>
+<table>
+<tr><td align="left"><br>A</td></tr>
+<tr><td><a href="Cryptokit.hash.html#METHODadd_byte">add_byte</a> [<a href="Cryptokit.hash.html">Cryptokit.hash</a>]</td>
+<td><div class="info">
+<code class="code">add_byte b</code> adds the character having code <code class="code">b</code>
+          to the running hash computation.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.hash.html#METHODadd_char">add_char</a> [<a href="Cryptokit.hash.html">Cryptokit.hash</a>]</td>
+<td><div class="info">
+<code class="code">add_char c</code> adds character <code class="code">c</code> to the running hash computation.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.hash.html#METHODadd_string">add_string</a> [<a href="Cryptokit.hash.html">Cryptokit.hash</a>]</td>
+<td><div class="info">
+<code class="code">add_string str</code> adds all characters of string <code class="code">str</code>
+          to the running hash computation.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.hash.html#METHODadd_substring">add_substring</a> [<a href="Cryptokit.hash.html">Cryptokit.hash</a>]</td>
+<td><div class="info">
+<code class="code">add_substring str pos len</code> adds <code class="code">len</code> characters from string
+          <code class="code">str</code>, starting at character number <code class="code">pos</code>, to the running
+          hash computation.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.transform.html#METHODavailable_output">available_output</a> [<a href="Cryptokit.transform.html">Cryptokit.transform</a>]</td>
+<td><div class="info">
+Return the number of characters of output currently available.
+</div>
+</td></tr>
+<tr><td align="left"><br>B</td></tr>
+<tr><td><a href="Cryptokit.Block.block_cipher.html#METHODblocksize">blocksize</a> [<a href="Cryptokit.Block.block_cipher.html">Cryptokit.Block.block_cipher</a>]</td>
+<td><div class="info">
+The size in bytes of the blocks manipulated by the cipher.
+</div>
+</td></tr>
+<tr><td align="left"><br>F</td></tr>
+<tr><td><a href="Cryptokit.transform.html#METHODfinish">finish</a> [<a href="Cryptokit.transform.html">Cryptokit.transform</a>]</td>
+<td><div class="info">
+Call method <code class="code">finish</code> to indicate that no further data will
+          be processed through the transform.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.transform.html#METHODflush">flush</a> [<a href="Cryptokit.transform.html">Cryptokit.transform</a>]</td>
+<td><div class="info">
+<code class="code">flush</code> causes the transform to flush its internal buffers
+          and make all output processed up to this point available through
+          the <code class="code">get_*</code> methods.
+</div>
+</td></tr>
+<tr><td align="left"><br>G</td></tr>
+<tr><td><a href="Cryptokit.transform.html#METHODget_byte">get_byte</a> [<a href="Cryptokit.transform.html">Cryptokit.transform</a>]</td>
+<td><div class="info">
+Return the code of the first character of output,
+          and remove it from the internal output buffer.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.transform.html#METHODget_char">get_char</a> [<a href="Cryptokit.transform.html">Cryptokit.transform</a>]</td>
+<td><div class="info">
+Return the first character of output, and remove it from the
+          internal output buffer.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.transform.html#METHODget_string">get_string</a> [<a href="Cryptokit.transform.html">Cryptokit.transform</a>]</td>
+<td><div class="info">
+Return a character string containing all output characters
+          available at this point.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.transform.html#METHODget_substring">get_substring</a> [<a href="Cryptokit.transform.html">Cryptokit.transform</a>]</td>
+<td><div class="info">
+Return a triple <code class="code">(buf,pos,len)</code>, where <code class="code">buf</code> is the internal
+          output buffer for the transform, <code class="code">pos</code> the position of the
+          first character of available output, and <code class="code">len</code> the number of
+          characters of available output.
+</div>
+</td></tr>
+<tr><td align="left"><br>H</td></tr>
+<tr><td><a href="Cryptokit.hash.html#METHODhash_size">hash_size</a> [<a href="Cryptokit.hash.html">Cryptokit.hash</a>]</td>
+<td><div class="info">
+Return the size of hash values produced by this hash function,
+          in bytes.
+</div>
+</td></tr>
+<tr><td align="left"><br>I</td></tr>
+<tr><td><a href="Cryptokit.transform.html#METHODinput_block_size">input_block_size</a> [<a href="Cryptokit.transform.html">Cryptokit.transform</a>]</td>
+<td><div class="info">
+Some transforms (e.g.
+</div>
+</td></tr>
+<tr><td align="left"><br>O</td></tr>
+<tr><td><a href="Cryptokit.transform.html#METHODoutput_block_size">output_block_size</a> [<a href="Cryptokit.transform.html">Cryptokit.transform</a>]</td>
+<td><div class="info">
+Some transforms (e.g.
+</div>
+</td></tr>
+<tr><td align="left"><br>P</td></tr>
+<tr><td><a href="Cryptokit.Padding.scheme.html#METHODpad">pad</a> [<a href="Cryptokit.Padding.scheme.html">Cryptokit.Padding.scheme</a>]</td>
+<td><div class="info">
+<code class="code">pad str used</code> is called with a buffer string <code class="code">str</code>
+            containing valid input data at positions <code class="code">0, ..., used-1</code>.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.transform.html#METHODput_byte">put_byte</a> [<a href="Cryptokit.transform.html">Cryptokit.transform</a>]</td>
+<td><div class="info">
+<code class="code">put_byte b</code> processes the character having code <code class="code">b</code>
+          through the transform.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.transform.html#METHODput_char">put_char</a> [<a href="Cryptokit.transform.html">Cryptokit.transform</a>]</td>
+<td><div class="info">
+<code class="code">put_char c</code> processes character <code class="code">c</code> through the transform.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.transform.html#METHODput_string">put_string</a> [<a href="Cryptokit.transform.html">Cryptokit.transform</a>]</td>
+<td><div class="info">
+<code class="code">put_string str</code> processes all characters of string <code class="code">str</code>
+          through the transform.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.transform.html#METHODput_substring">put_substring</a> [<a href="Cryptokit.transform.html">Cryptokit.transform</a>]</td>
+<td><div class="info">
+<code class="code">put_substring str pos len</code> processes <code class="code">len</code> characters of
+          string <code class="code">str</code>, starting at character number <code class="code">pos</code>,
+          through the transform.
+</div>
+</td></tr>
+<tr><td align="left"><br>R</td></tr>
+<tr><td><a href="Cryptokit.Random.rng.html#METHODrandom_bytes">random_bytes</a> [<a href="Cryptokit.Random.rng.html">Cryptokit.Random.rng</a>]</td>
+<td><div class="info">
+<code class="code">random_bytes buf pos len</code> stores <code class="code">len</code> random bytes
+            in string <code class="code">buf</code>, starting at position <code class="code">pos</code>.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.hash.html#METHODresult">result</a> [<a href="Cryptokit.hash.html">Cryptokit.hash</a>]</td>
+<td><div class="info">
+Terminate the hash computation and return the hash value for
+          the input data provided via the <code class="code">add_*</code> methods.
+</div>
+</td></tr>
+<tr><td align="left"><br>S</td></tr>
+<tr><td><a href="Cryptokit.Padding.scheme.html#METHODstrip">strip</a> [<a href="Cryptokit.Padding.scheme.html">Cryptokit.Padding.scheme</a>]</td>
+<td><div class="info">
+This is the converse of the <code class="code">pad</code> operation: from a padded
+            string <code class="code">buf</code> as built by method <code class="code">pad</code>, <code class="code">strip buf</code> determines
+            and returns the starting position of the padding data,
+            or equivalently the length of valid, non-padded input data
+            in <code class="code">buf</code>.
+</div>
+</td></tr>
+<tr><td align="left"><br>T</td></tr>
+<tr><td><a href="Cryptokit.Stream.stream_cipher.html#METHODtransform">transform</a> [<a href="Cryptokit.Stream.stream_cipher.html">Cryptokit.Stream.stream_cipher</a>]</td>
+<td><div class="info">
+<code class="code">transform src spos dst dpos len</code> encrypts or decrypts
+            <code class="code">len</code> characters, read from string <code class="code">src</code> starting at
+            position <code class="code">spos</code>.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.Block.block_cipher.html#METHODtransform">transform</a> [<a href="Cryptokit.Block.block_cipher.html">Cryptokit.Block.block_cipher</a>]</td>
+<td><div class="info">
+<code class="code">transform src spos dst dpos</code> encrypts or decrypts one block
+            of data.
+</div>
+</td></tr>
+<tr><td align="left"><br>W</td></tr>
+<tr><td><a href="Cryptokit.Stream.stream_cipher.html#METHODwipe">wipe</a> [<a href="Cryptokit.Stream.stream_cipher.html">Cryptokit.Stream.stream_cipher</a>]</td>
+<td><div class="info">
+Erase the internal state of the stream cipher, such as
+            all key-dependent material.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.Block.block_cipher.html#METHODwipe">wipe</a> [<a href="Cryptokit.Block.block_cipher.html">Cryptokit.Block.block_cipher</a>]</td>
+<td><div class="info">
+Erase the internal state of the block cipher, such as
+            all key-dependent material.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.hash.html#METHODwipe">wipe</a> [<a href="Cryptokit.hash.html">Cryptokit.hash</a>]</td>
+<td><div class="info">
+Erase all internal buffers and data structures of this hash,
+          overwriting them with zeroes.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.transform.html#METHODwipe">wipe</a> [<a href="Cryptokit.transform.html">Cryptokit.transform</a>]</td>
+<td><div class="info">
+Erase all internal buffers and data structures of this transform,
+          overwriting them with zeroes.
+</div>
+</td></tr>
+<tr><td><a href="Cryptokit.Random.rng.html#METHODwipe">wipe</a> [<a href="Cryptokit.Random.rng.html">Cryptokit.Random.rng</a>]</td>
+<td><div class="info">
+Erases the internal state of the generator.
+</div>
+</td></tr>
+</table><br>
+</body>
+</html>
