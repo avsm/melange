@@ -6,11 +6,16 @@ world:
 	$(MAKE) native
 
 clean:
-	rm -f config.h config.log config.mk config.status
+	rm -f config.log config.status
 	for i in $(SUBDIRS); do (cd $$i && $(MAKE) $@); done
+
+distclean: clean
+	rm -f config.h config.mk
 
 %:
 	for i in $(SUBDIRS); do (cd $$i && $(MAKE) $@); done
 
 install:
 	@echo Not done yet, sorry!
+
+.PHONY: clean world distclean depend install all
