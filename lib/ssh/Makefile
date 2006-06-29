@@ -1,5 +1,7 @@
 # $Id$
 
+include ../../config.mk
+
 OCAMLMAKEFILE = ../../OCamlMakefile
 
 SPLC=../../tools/spl/splc

@@ -14,20 +14,23 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <termios.h>
-
-#if defined(linux)
-#  include <sys/ioctl.h>
-#  include <pty.h>
-#else
-#  include <util.h>
-#endif
+#include "../../config.h"
 
 #include <stdio.h>
 #include <errno.h>
 #include <paths.h>
 #include <fcntl.h>
 #include <string.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+
+#ifdef HAVE_PTY_H
+#  include <pty.h>
+#endif
+
+#ifdef HAVE_UTIL_H
+#  include <util.h>
+#endif
 
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
