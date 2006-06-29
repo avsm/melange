@@ -25,7 +25,7 @@ let addr = Unix.ADDR_INET (Unix.inet_addr_of_string ip, port)
 (** Return a socket connected to the mDNS multicast group *)
 let connect () = 
   (* Bind a local socket (any port) *)
-  let s = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
+  let s = Unix.socket Unix.PF_INET Unix.SOCK_DGRAM 0 in
   Unix.handle_unix_error (Unix.bind s) (Unix.ADDR_INET (Unix.inet_addr_any, 0));
   (* Join the socket to the multicast group *)
   Ounix.set_ip_multicast_ttl s 1;
