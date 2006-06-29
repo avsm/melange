@@ -18,4 +18,3 @@ distclean: clean
 install:
 	@echo Not done yet, sorry!
 
-.PHONY: clean world distclean depend install all
