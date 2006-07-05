@@ -22,5 +22,7 @@ AC_C_CONST
 AC_PROG_GCC_TRADITIONAL
 AC_CHECK_FUNCS([inet_ntoa memset strerror])
 
-AC_SUBST([config.mk])
+AC_ARG_ENABLE(debug, [  --enable-debug          output verbose debug messages], [DEBUG_MODE="DEBUG"], [DEBUG_MODE="NORMAL"])
+
+AC_SUBST(DEBUG_MODE)
 AC_OUTPUT

@@ -4,3 +4,6 @@ LIBS=@LIBS@
 DEFS=@DEFS@
 CC=@CC@
 PREFIX=@prefix@
+DEBUG_PPFLAGS=-D'DEBUG(X)=(if log\#debug_active then log\#debug (X))' -D'DEBUG_CMD(X)=(if log\#debug_active then (X))'
+NORMAL_PPFLAGS=-D'DEBUG(X)' -D'DEBUG_CMD(X)'
+PPFLAGS=$(@DEBUG_MODE@_PPFLAGS)

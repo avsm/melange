@@ -1,3 +1,4 @@
+(*pp cpp *)
 (*
  * Copyright (c) 2005,2006 Anil Madhavapeddy <anil@recoil.org>
  *
@@ -47,6 +48,7 @@ class stderr_log =
     object(self)
     inherit base_log as base
     method init = self#info "started stderr_log"
+    
     method debug x =
         outputfn (sprintf "{debug} %s" x)
     method warning x =
