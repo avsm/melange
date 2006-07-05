@@ -1,5 +1,5 @@
 (*
- * Copyright (c) 2005 Anil Madhavapeddy <anil@recoil.org>
+ * Copyright (c) 2005,2006 Anil Madhavapeddy <anil@recoil.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: olog.ml,v 1.3 2005/08/30 17:18:49 avsm Exp $
  *)
 
 open Printf
@@ -66,3 +65,4 @@ class null_log = object(self)
     method info x = ()
     method critical x = ()
 end
+

@@ -7,8 +7,7 @@ OCAMLMAKEFILE = ../../OCamlMakefile
 SPLC=../../tools/spl/splc
 MPLC=../../tools/mpl/mplc
 
-SOURCES= olog.mli olog.ml  ssh_statecalls.ml ssh_message.ml \
-	ssh_classify.ml \
+SOURCES= ssh_statecalls.ml ssh_message.ml ssh_classify.ml \
 	ssh_server_automaton.mli ssh_server_automaton.ml \
 	ssh_server_channel.mli ssh_server_channel.ml \
 	ssh_utils.ml ssh_pty.ml ssh_pty_stubs.c \
@@ -26,6 +25,10 @@ TRASH=	ssh_server_automaton.ml ssh_server_automaton.mli \
 	ssh_client_automaton.ml ssh_client_automaton.mli \
 	ssh_server_channel.ml ssh_server_channel.mli \
 	ssh_statecalls.ml
+
+all:
+	$(MAKE) native
+	$(MAKE) bytecode
 
 native: ncl
 bytecode: bcl
