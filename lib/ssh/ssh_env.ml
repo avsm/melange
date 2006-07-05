@@ -1,3 +1,4 @@
+(*pp cpp *)
 (*
  * Copyright (c) 2005,2006 Anil Madhavapeddy <anil@recoil.org>
  *
@@ -18,24 +19,14 @@
 
 open Printf
 open Ssh_utils
+open Ssh_env_t
 
 exception Disconnect_connection of (Ssh_message.Transport.Disconnect.reason_code_t * string)
 exception Unexpected_packet of string
 exception Internal_error of string
 
-type t = {
-    fd: Ounix.tcp_odescr;
-    log: Olog.base_log;
-    rng: Cryptokit.Random.rng;
-    osel: Ounix.oselect;
-    kex_methods: Ssh_kex.Methods.t list;
-    mac_methods: Ssh_algorithms.MAC.t list;
-    cipher_methods: Ssh_algorithms.Cipher.t list;
-    hostkey_algorithms: Ssh_keys.PublicKey.t list;
-}
-
 let version = {
-    Ssh_transport.Version.raw = None;
+    Ssh_version.raw = None;
     softwareversion = "MLSSH_0.2";
     protoversion = "2.0"
 }
@@ -63,9 +54,9 @@ type negotiation_state = {
 type xmit = Ssh_transport.Packet.xmit
 type xmit_t = Ssh_transport.Packet.xmit_t
 
-class virtual env conf =
-    let _ = conf.fd#write_buf (sprintf "%s\n" (Ssh_transport.Version.to_string version)) in
-    let other_version = Ssh_transport.Version.unmarshal conf.fd in
+class virtual env (conf:Ssh_env_t.t) =
+    let _ = conf.fd#write_buf (sprintf "%s\n" (Ssh_version.to_string version)) in
+    let other_version = Ssh_version.unmarshal conf.fd in
     object(self)
 
     (* Give access to RNG and logging to inherited objects *)
@@ -111,8 +102,8 @@ class virtual env conf =
     val tx_seq_num = ref (-1l)
 
     (* Virtual methods about versions provided by the concrete implementation *)
-    method virtual server_version : Ssh_transport.Version.t
-    method virtual client_version : Ssh_transport.Version.t
+    method virtual server_version : Ssh_version.t
+    method virtual client_version : Ssh_version.t
     method private other_version = other_version
     
     (* Accepts a decrypted environment and provides an OCaml structure for it *)
@@ -168,7 +159,7 @@ class virtual env conf =
             ~cryptfn:transport.cryptfn
             ~macfn:transport.crypt_macfn
             ~splfn:(fun o -> self#tick_automaton o#xmit_statecall)
-            conf.fd pack
+            conf pack
     
     method private xmit_channel (chan:Ssh_channel.channel) (pack:Mpl_stdlib.env -> xmit) =
         tx_seq_num := Int32.succ !tx_seq_num;
@@ -177,29 +168,29 @@ class virtual env conf =
             ~cryptfn:transport.cryptfn
             ~macfn:transport.crypt_macfn
             ~splfn:(fun o -> chan#tick_automaton o#xmit_statecall)
-            conf.fd pack
+            conf pack
 
     method private read_ssh_packet =
         let module C = Ssh_classify in
         try
             match self#recv with
             |C.DHGexSHA1 x ->
-                if log#debug_active then Ssh_message.Dhgexsha1.prettyprint x;
+                DEBUG_CMD(Ssh_message.Dhgexsha1.prettyprint x);
                 self#dispatch_dhgexsha1_packet x
             |C.DHGroupSHA1 x ->
-                if log#debug_active then Ssh_message.Dhgroupsha1.prettyprint x; 
+                DEBUG_CMD(Ssh_message.Dhgroupsha1.prettyprint x); 
                 self#dispatch_dhg1sha1_packet x
             |C.Transport x ->
-                if log#debug_active then Ssh_message.Transport.prettyprint x;
+                DEBUG_CMD(Ssh_message.Transport.prettyprint x);
                 self#dispatch_transport_packet x
             |C.Auth x ->
-                if log#debug_active then Ssh_message.Auth.prettyprint x;
+                DEBUG_CMD(Ssh_message.Auth.prettyprint x);
                 self#dispatch_auth_packet x
             |C.Channel x ->
-                if log#debug_active then Ssh_message.Channel.prettyprint x;
+                DEBUG_CMD(Ssh_message.Channel.prettyprint x);
                 self#dispatch_channel_packet x
             |C.Unknown ->
-                failwith "unknown packet"
+                failwith "unknown packet" (* XXX dont die here, xmit Unimplemented *)
         with
             |Disconnect_connection (code,reason) ->
                 self#xmit (Ssh_message.Transport.Disconnect.t
@@ -249,14 +240,13 @@ class virtual env conf =
         let server_to_client_key = derivefn key_size_sc 'D' in
         let integrity_client_to_server = derivefn mac_len_cs 'E' in
         let integrity_server_to_client = derivefn mac_len_sc 'F' in
-(*
         let hob = Ssh_utils.hex_of_binary in
-        log_debug ("c->s iv   (A): " ^ (hob client_to_server_iv));
-        log_debug ("s->c iv   (B): " ^ (hob server_to_client_iv));
-        log_debug ("c->s key  (C): " ^ (hob client_to_server_key));
-        log_debug ("s->c key  (D): " ^ (hob server_to_client_key));
-        log_debug ("c->s hash (E): " ^ (hob integrity_client_to_server));
-        log_debug ("s->c hash (F): " ^ (hob integrity_server_to_client)); *)
+        DEBUG ("c->s iv   (A): " ^ (hob client_to_server_iv));
+        DEBUG ("s->c iv   (B): " ^ (hob server_to_client_iv));
+        DEBUG ("c->s key  (C): " ^ (hob client_to_server_key));
+        DEBUG ("s->c key  (D): " ^ (hob server_to_client_key));
+        DEBUG ("c->s hash (E): " ^ (hob integrity_client_to_server));
+        DEBUG ("s->c hash (F): " ^ (hob integrity_server_to_client));
         (* Layering violation here, but just putting this logic here saves
          * passing a load of variables between the derived client/server classes *)
         let module AC = Ssh_algorithms.Cipher in
@@ -320,7 +310,7 @@ class virtual env conf =
             umay (fun _ -> self#close_channel chan) chan#pid
         in
         try
-            let env = Ssh_transport.Pool.get () in
+            let env = Ssh_pool.get () in
             M.fill env ofd#fd;
             let len = M.size env in
             if len > 0 then begin
@@ -328,5 +318,5 @@ class virtual env conf =
             end else chan_err ()
         with |Mpl_stdlib.IO_error |Unix.Unix_error _ -> chan_err ()
 
-    method reset = Ssh_transport.Pool.reset ()
+    method reset = Ssh_pool.reset ()
 end

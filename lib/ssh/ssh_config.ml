@@ -80,4 +80,5 @@ class type server_config = object
     (* Request a shell : id -> exec_response *)
     method connection_request_shell : Ssh_channel.channel ->
         (Ssh_pty.pty * Ssh_pty.pty_window) option -> Server.exec_response
+
 end

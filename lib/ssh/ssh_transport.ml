@@ -1,6 +1,7 @@
+(*pp cpp *)
 (*
  * Copyright (c) 2004 David Scott <dave@recoil.org>
- * Copyright (c) 2004,2005 Anil Madhavapeddy <anil@recoil.org>
+ * Copyright (c) 2004,2005,2006 Anil Madhavapeddy <anil@recoil.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,77 +23,6 @@ open Ssh_utils
 
 let max_payload = 32768
 let max_packet_size = 35000
-
-module Version = struct
-
-    type t = { raw: string option;   (* needed for KEXDH_REPLY signature hash *)
-               protoversion: string;
-               softwareversion: string }
-               
-    let to_string p =
-        match p.raw with
-        |None -> sprintf "SSH-%s-%s" p.protoversion p.softwareversion
-        |Some x -> x
-
-    exception Parse_failure
-
-    let unmarshal ofd = 
-        (* XXX - need to make sure input_line is safe wrt \r\n - avsm *)
-        let str = input_line ofd#in_channel in
-        (* there might be ASCII 13 characters in the buffer and probably    *)
-        (* one stuck on the end.                                            *)
-        (* It should be in form SSH-protoversion-softwareversioncomments    *)
-        if String.sub str 0 4 <> "SSH-" 
-        then raise Parse_failure;
-        let str' = String.sub str 4 (String.length str - 4) in
-        let other_dash =
-            try String.index str' '-' 
-            with Not_found -> raise Parse_failure in
-        let proto = String.sub str' 0 (other_dash - 1) in
-        let software = String.sub str' (other_dash + 1) (String.length str' - other_dash - 1) in
-        { raw = Some str; protoversion = proto; softwareversion = software }
-end           
-
-(* Interface to request network buffers safely without excessive allocation *)
-module Pool = struct
-    type pool = {
-        size: int;                       (* bytes in pool pages *)
-        mutable free_list: string list;  (* list of buffers *)
-        mutable used_list: string list;  (* used buffers *)
-    }
-    let pool =
-        let size = max_packet_size in
-        let l = List.map (fun _ -> String.create size) [1;2;3;4;5;6;7;8;9;10;11;12] in
-        { size=size; free_list=l; used_list=[] }
-
-    let get () =
-        match pool.free_list with
-        |hd::tl ->
-            pool.free_list <- tl;
-            pool.used_list <- hd :: pool.used_list;
-            Mpl_stdlib.new_env hd
-        |[] -> failwith "out of luck"
-    
-    let reset () =
-        List.iter (fun b ->
-          (*  String.fill b 0 (String.length b) 'X';  *)
-            pool.free_list <- b :: pool.free_list;
-        ) pool.used_list;
-        pool.used_list <- []
-
-    let get_fn fn =
-        let buf = match pool.free_list with
-        |hd::tl ->
-            pool.free_list <- tl;
-            hd
-        |[] -> failwith "out of luck" in
-        always (fun () -> pool.free_list <- buf :: pool.free_list)
-            (fun () -> fn (Mpl_stdlib.new_env buf))
-            
-    let get_string_fn fn =
-        get_fn (fun env -> fn env; Mpl_stdlib.string_of_env env)
-
-end
 
 module Packet = struct
 
@@ -129,7 +59,7 @@ module Packet = struct
             let () = decryptfn obuf 0 buf off obuflen in
             obuflen
         in
-        let env = Pool.get () in
+        let env = Ssh_pool.get () in
         M.set_fillfn env fillfn;
         let p = Ssh_message.Ssh.unmarshal env in
         (* calculate the MAC we are expecting *)
@@ -154,11 +84,19 @@ module Packet = struct
     end
     type xmit_t = Mpl_stdlib.env -> xmit
 
-    let marshal ~block_size ~padfn ~cryptfn ~macfn ~splfn (fd:Ounix.tcp_odescr) (data:xmit_t) =
+    let marshal ~block_size ~padfn ~cryptfn ~macfn ~splfn (conf:Ssh_env_t.t) (data:xmit_t) =
+        let fd = conf.Ssh_env_t.fd in
+        let log = conf.Ssh_env_t.log in
         let module M = Mpl_stdlib in
-        let txenv = Pool.get () in
+        let txenv = Ssh_pool.get () in
         (* XXX compression not supported yet *)
-        let d env = splfn (data env) in
+        let d env =
+            let pack = data env in
+            DEBUG("transmitting:");
+            DEBUG_CMD(pack#prettyprint);
+            splfn pack
+        in
+            
         (* calculate padding *)
         let padding env =
             let align = max block_size 8 in

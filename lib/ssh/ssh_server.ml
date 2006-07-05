@@ -125,9 +125,9 @@ class env conf server_conf = object(self)
             |Encrypted -> self#xmit_kexinit (* rekey request *)
             |_ -> raise (Ssh_env.Internal_error "kexinit in unexpected state") in
             let bsl = String.concat "," in
-            let kexlist = bsl (List.map Ssh_kex.Methods.to_string conf.Ssh_env.kex_methods) in
-            let maclist = bsl (List.map Ssh_algorithms.MAC.to_string conf.Ssh_env.mac_methods) in
-            let cipherlist = bsl (List.map Ssh_algorithms.Cipher.to_string conf.Ssh_env.cipher_methods) in
+            let kexlist = bsl (List.map Ssh_kex.Methods.to_string conf.Ssh_env_t.kex_methods) in
+            let maclist = bsl (List.map Ssh_algorithms.MAC.to_string conf.Ssh_env_t.mac_methods) in
+            let cipherlist = bsl (List.map Ssh_algorithms.Cipher.to_string conf.Ssh_env_t.cipher_methods) in
             let s_kex, s_enc_cs, s_enc_sc, s_mac_cs, s_mac_sc =
                 Ssh_kex.Methods.algorithm_choice
                     ~kex: (kexlist, client_ki#kex_algorithms)
@@ -181,7 +181,7 @@ class env conf server_conf = object(self)
             let xmitkey = `RSA (Ssh_message.Key.RSA.t ~e:(mpint rsakey.Cryptokit.RSA.e)
                 ~n:(mpint rsakey.Cryptokit.RSA.n)) in
             let server_f, shared_secret = Ssh_kex.Methods.compute_reply self#rng p g x#e in
-            let k_s = Ssh_transport.Pool.get_string_fn (Ssh_message.Key.m xmitkey) in
+            let k_s = Ssh_pool.get_string_fn (Ssh_message.Key.m xmitkey) in
             let kex_hash_args = {
                 Ssh_kex.Methods.DHGroup.v_c=self#client_version;
                 v_s=self#server_version;
@@ -194,7 +194,7 @@ class env conf server_conf = object(self)
             let hash = Cryptokit.hash_string (Cryptokit.Hash.sha1 ()) kex_hash_concat in
             let signed_padded_hash = Cryptokit.RSA.sign rsakey
                 (Ssh_kex.Methods.pad_rsa_signature (mpint rsakey.Cryptokit.RSA.n) hash) in
-            let sig_h = Ssh_transport.Pool.get_string_fn (Ssh_message.Sig.RSA.t ~sig_blob:signed_padded_hash) in
+            let sig_h = Ssh_pool.get_string_fn (Ssh_message.Sig.RSA.t ~sig_blob:signed_padded_hash) in
             let kex_reply = Ssh_message.Dhgroupsha1.Reply.t ~k_s:k_s ~f:server_f ~sig_h:sig_h in
             self#xmit (kex_reply :> xmit_t);
             self#set_new_keys neg_state hash shared_secret
@@ -228,7 +228,7 @@ class env conf server_conf = object(self)
             let xmitkey = `RSA (Ssh_message.Key.RSA.t ~e:(mpint rsakey.Cryptokit.RSA.e)
                 ~n:(mpint rsakey.Cryptokit.RSA.n)) in
             let server_f, shared_secret = Ssh_kex.Methods.compute_reply self#rng p g x#e in
-            let k_s = Ssh_transport.Pool.get_string_fn (Ssh_message.Key.m xmitkey) in
+            let k_s = Ssh_pool.get_string_fn (Ssh_message.Key.m xmitkey) in
             let kex_hash_args = {
                 Ssh_kex.Methods.DHGex.v_c=self#client_version;
                 v_s=self#server_version; p=p; g=g;
@@ -241,7 +241,7 @@ class env conf server_conf = object(self)
             let hash = Cryptokit.hash_string (Cryptokit.Hash.sha1 ()) kex_hash_concat in
             let signed_padded_hash = Cryptokit.RSA.sign rsakey
                 (Ssh_kex.Methods.pad_rsa_signature (mpint rsakey.Cryptokit.RSA.n) hash) in
-            let sig_h = Ssh_transport.Pool.get_string_fn (Ssh_message.Sig.RSA.t ~sig_blob:signed_padded_hash) in
+            let sig_h = Ssh_pool.get_string_fn (Ssh_message.Sig.RSA.t ~sig_blob:signed_padded_hash) in
             let kex_reply = Ssh_message.Dhgexsha1.Reply.t ~k_s:k_s ~f:server_f ~sig_h:sig_h in
             self#xmit (kex_reply :> xmit_t);
             self#set_new_keys neg_state hash shared_secret
@@ -409,7 +409,7 @@ class env conf server_conf = object(self)
             |Some (pty, pwin) ->
                 chan#tick_automaton `Expect_Pty_Success;
                 chan#set_pty (pty,pwin);
-                conf.Ssh_env.fd#set_nodelay true;
+                conf.Ssh_env_t.fd#set_nodelay true;
                 true
             |None -> false
         )
@@ -419,8 +419,8 @@ class env conf server_conf = object(self)
             |Some (pid, stdin, stdout, stderr) ->
                 chan#tick_automaton `Expect_Exec_Success;
                 let ostdin = may (fun stdin -> new Ounix.stream_odescr stdin) stdin in
-                let ostdout = may (self#ofd_of_stdout conf.Ssh_env.osel chan) stdout in
-                let ostderr = may (self#ofd_of_stderr conf.Ssh_env.osel chan) stderr in
+                let ostdout = may (self#ofd_of_stdout conf.Ssh_env_t.osel chan) stdout in
+                let ostderr = may (self#ofd_of_stderr conf.Ssh_env_t.osel chan) stderr in
                 chan#set_stdin ostdin;
                 chan#set_stdout ostdout;
                 chan#set_stderr ostderr;
@@ -434,8 +434,8 @@ class env conf server_conf = object(self)
             |Some (pid, stdin, stdout, stderr) ->
                 chan#tick_automaton `Expect_Shell_Success;
                 let ostdin = may (fun stdin -> new Ounix.stream_odescr stdin) stdin in
-                let ostdout = may (fun stdout -> self#ofd_of_stdout conf.Ssh_env.osel chan stdout) stdout in
-                let ostderr = may (self#ofd_of_stderr conf.Ssh_env.osel chan) stderr in
+                let ostdout = may (fun stdout -> self#ofd_of_stdout conf.Ssh_env_t.osel chan stdout) stdout in
+                let ostderr = may (self#ofd_of_stderr conf.Ssh_env_t.osel chan) stderr in
                 chan#set_stdin ostdin;
                 chan#set_stdout ostdout;
                 chan#set_stderr ostderr;

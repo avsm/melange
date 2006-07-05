@@ -1,5 +1,6 @@
 # $Id$
 
+include ../../config.mk
 OCAMLMAKEFILE = ../../OCamlMakefile
  
 SOURCES = server.ml ssh_openssh_formats.ml sshd.ml

@@ -1,3 +1,4 @@
+(*pp cpp *)
 (*
  * Copyright (c) 2005,2006 Anil Madhavapeddy <anil@recoil.org>
  *
@@ -22,8 +23,8 @@ open Ssh_tty
 open Printf
 
 class mlsshd_config conf =
-    let log = conf.Ssh_env.log in
-    let rng = conf.Ssh_env.rng in
+    let log = conf.Ssh_env_t.log in
+    let rng = conf.Ssh_env_t.rng in
     let moduli_file = "./moduli" in
     let hostkey_file = "./server.rsa.key" in    
     let hostkey_size = 1024 in
@@ -54,11 +55,11 @@ class mlsshd_config conf =
         let primes = Hashtbl.create 1 in
         try
             Ssh_openssh_formats.moduli moduli_file primes;
-            log#debug "Successfully initialised moduli";
+            DEBUG("Successfully initialised moduli");
             primes;
         with Ssh_openssh_formats.Parse_failure ->
             (* Clear primes to be safe *)
-            log#debug "moduli parsing error";
+            DEBUG("moduli parsing error");
             Hashtbl.clear primes;
             let g1p,g1g = Ssh_kex.Methods.public_parameters Ssh_kex.Methods.DiffieHellmanGroup1SHA1 in
             let g14p,g14g = Ssh_kex.Methods.public_parameters Ssh_kex.Methods.DiffieHellmanGroup14SHA1 in
@@ -198,7 +199,7 @@ let start_server port log caller fd =
     let osel = new Ounix.oselect in
     let osig = new Ounix.osignal in
     let conf = {
-        Ssh_env.fd = new Ounix.tcp_odescr fd;
+        Ssh_env_t.fd = new Ounix.tcp_odescr fd;
         log = log;
         rng = Cryptokit.Random.device_rng "/dev/urandom";
         kex_methods = kex;
@@ -267,7 +268,7 @@ let _ =
     let sock = ADDR_INET (inet_addr_any, port) in
     let log = new Olog.stderr_log in
     log#init;
-    log#set_critical;
+    log#set_debug;
     let sfun = Server.handle_single log (start_server port) in
     try
     Server.establish_server log sfun sock

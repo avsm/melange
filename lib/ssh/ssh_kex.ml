@@ -39,8 +39,8 @@ module Methods = struct
 
     module DHGroup = struct
         type kex_hash = {
-            v_c: Ssh_transport.Version.t;           (* clients version *)
-            v_s: Ssh_transport.Version.t;           (* servers version *)
+            v_c: Ssh_version.t;           (* clients version *)
+            v_s: Ssh_version.t;           (* servers version *)
             i_c: string;                            (* clients last kexinit *)
             i_s: string;                            (* servers last kexinit *)
             k_s: string;                            (* servers host key *)
@@ -50,11 +50,11 @@ module Methods = struct
         }
         
         let marshal args =
-            Ssh_transport.Pool.get_string_fn (fun env ->
+            Ssh_pool.get_string_fn (fun env ->
                 let ms x = ignore(BS.marshal env (BS.of_string x)) in
                 let mp x = ignore(MP.marshal env x) in
-                ms (Ssh_transport.Version.to_string args.v_c);
-                ms (Ssh_transport.Version.to_string args.v_s);
+                ms (Ssh_version.to_string args.v_c);
+                ms (Ssh_version.to_string args.v_s);
                 ms args.i_c;
                 ms args.i_s;
                 ms args.k_s;
@@ -66,8 +66,8 @@ module Methods = struct
     
     module DHGex = struct
         type kex_hash = {
-            v_c: Ssh_transport.Version.t;   (* clients version string (no \r\n) *)
-            v_s: Ssh_transport.Version.t;   (* servers version string (no \r\n) *)
+            v_c: Ssh_version.t;   (* clients version string (no \r\n) *)
+            v_s: Ssh_version.t;   (* servers version string (no \r\n) *)
             i_c: string;   (* payload of clients last kexinit  *)
             i_s: string;   (* payload of servers last kexinit  *)
             k_s: string;   (* servers host key                 *)
@@ -82,12 +82,12 @@ module Methods = struct
         }    
 
         let marshal a =
-            Ssh_transport.Pool.get_string_fn (fun env ->
+            Ssh_pool.get_string_fn (fun env ->
                 let bsm x = ignore(BS.marshal env (BS.of_string x)) in
                 let mpm x = ignore(MP.marshal env x) in
                 let um x = ignore(I32.marshal env (I32.of_int32 x)) in
-                bsm (Ssh_transport.Version.to_string a.v_c);
-                bsm (Ssh_transport.Version.to_string a.v_s);
+                bsm (Ssh_version.to_string a.v_c);
+                bsm (Ssh_version.to_string a.v_s);
                 bsm a.i_c;
                 bsm a.i_s;
                 bsm a.k_s;
@@ -248,9 +248,9 @@ module Methods = struct
         (* Be careful here ... the hashfn is only good for one use once evaluated, hence
              the need to pass a unit arg through *)
         let htrans () = Cryptokit.hash_string (hashfn ()) in
-        let kh = Ssh_transport.Pool.get_string_fn (fun env ->
+        let kh = Ssh_pool.get_string_fn (fun env ->
             ignore(MP.marshal env k); ignore(MR.marshal env h)) in
-        let sidm = Ssh_transport.Pool.get_string_fn (fun env ->
+        let sidm = Ssh_pool.get_string_fn (fun env ->
             MR.marshal env kh; MB.marshal env (MB.of_char x); MR.marshal env session_id) in
         let k1 = htrans () sidm in
         (* We need this many iterations to have enough for the requested size *)
