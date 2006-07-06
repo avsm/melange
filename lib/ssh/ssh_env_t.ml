@@ -7,5 +7,6 @@ type t = {
     mac_methods: Ssh_algorithms.MAC.t list;
     cipher_methods: Ssh_algorithms.Cipher.t list;
     hostkey_algorithms: Ssh_keys.PublicKey.t list;
+    debugger: bool;  (* Is the SPL debugger active? *)
 }
 

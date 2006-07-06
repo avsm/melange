@@ -16,6 +16,10 @@ INCDIRS=../../lib/ssh ../../tools/mpl ../../lib/ounix ../../tools/spl \
 native: nc
 bytecode: bc
 
+all:
+	$(MAKE) native
+	$(MAKE) bytecode
+
 depend:
 	cd ../../lib/ssh && $(MAKE) depend native bytecode
 	cd ../../dist && $(MAKE) all

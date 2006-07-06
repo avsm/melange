@@ -23,7 +23,8 @@ exception Bad_access
 class channel
     ~(packet_size:int32)
     ~(initial_window:int32)
-    ~(channel:int32) =
+    ~(channel:int32) 
+    (conf:Ssh_env_t.t) =
     let chan_access = function
     |Some x -> x |None -> raise Bad_access in object(self)
     val mutable close = false
@@ -32,16 +33,17 @@ class channel
 
     val mutable automaton =
         let auto = Ssh_server_channel.init () in
-        let sf = Spl_stdlib.get_tcp_sock_factory 1235 in
-        let oc,_ = sf () in
-        Ssh_server_channel.pagefn oc;
-        Ssh_server_channel.set_cfn auto sf;
+        if conf.Ssh_env_t.debugger then begin
+            let sock_factory = Spl_stdlib.get_tcp_sock_factory 1235 in
+            let oc,_ = sock_factory () in
+            Ssh_server_channel.pagefn oc;
+            Ssh_server_channel.set_cfn auto sock_factory;
+        end;
         auto
    
     method automaton = automaton
     method tick_automaton (s:Ssh_statecalls.t) =
         automaton <- Ssh_server_channel.tick automaton s
-    method tick_automaton (s:Ssh_statecalls.t) = ()
     
     val our_channel = channel
     val our_packet_size = packet_size
@@ -147,17 +149,17 @@ class channel_env = object(self)
         max_channel <- x;
         x
         
-    method new_chan ~(packet_size:int32) ~(initial_window:int32) =
+    method new_chan ~(packet_size:int32) ~(initial_window:int32) conf =
         let our_id = self#new_id in
         let chan = new channel ~packet_size:packet_size
-            ~initial_window:initial_window ~channel:our_id in
+            ~initial_window:initial_window ~channel:our_id conf in
         Hashtbl.add chans our_id chan;
         Some chan
 
-    method new_half_chan ~initial_window ~packet_size ~pty ~cmd =
+    method new_half_chan ~initial_window ~packet_size ~pty ~cmd conf =
         let our_id = self#new_id in
         let chan = new channel ~packet_size:packet_size
-            ~initial_window:initial_window ~channel:our_id in
+            ~initial_window:initial_window ~channel:our_id conf in
         let c = { chan=chan; pty=pty; exec=cmd; confirm=(None,None) } in
         Hashtbl.add halfchans our_id c;
         Some chan

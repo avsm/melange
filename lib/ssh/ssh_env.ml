@@ -171,6 +171,7 @@ class virtual env (conf:Ssh_env_t.t) =
             conf pack
 
     method private read_ssh_packet =
+        DEBUG("received packet:");
         let module C = Ssh_classify in
         try
             match self#recv with

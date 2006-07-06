@@ -175,6 +175,7 @@ class mlsshd_config conf =
 end
 
 let start_server port log caller fd =
+    let debugger = false in
     let kex = [
         Ssh_kex.Methods.DiffieHellmanGexSHA1;
         Ssh_kex.Methods.DiffieHellmanGroup14SHA1;
@@ -207,30 +208,11 @@ let start_server port log caller fd =
         cipher_methods = ciphers;
         hostkey_algorithms = host_key_algorithms;
         osel = osel;
+        debugger = debugger;
     } in
     let server_conf = new mlsshd_config conf in
     let env = new Ssh_server.env conf (server_conf:>Ssh_config.server_config) in
-    osel#add_ofd (env#get_ofd :> Ounix.odescr);
-
-(*
-    let debugger_on = ref false in
-    let s = socket PF_INET SOCK_STREAM 0 in
-    setsockopt s SO_REUSEADDR true;
-    bind s (ADDR_INET(inet_addr_any,1234));
-    listen s 5;
-    let sock_factory = fun () ->
-            log#debug (sprintf "sock_factory accept() --- %b" !debugger_on);
-            let fd,_ = accept s in
-            let ic = in_channel_of_descr fd in
-            let oc = out_channel_of_descr fd in
-            oc,ic
-    in
-
-    log#debug (sprintf "www_server_fn --- %b" !debugger_on);
-    let oc,_ = sock_factory () in
-    Ssh_server_automaton.pagefn oc;
-    Ssh_server_automaton.set_cfn env#automaton sock_factory;
-*)
+    osel#add_ofd (env#get_ofd :> Ounix.odescr);    
     osig#add_sigchld_handler (fun () ->
         let retry = ref true in
         try while !retry do

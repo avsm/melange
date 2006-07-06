@@ -3,6 +3,7 @@ class channel :
   packet_size:int32 ->
   initial_window:int32 ->
   channel:int32 ->
+  Ssh_env_t.t ->
   object
     val mutable automaton : Ssh_server_channel.t
     val mutable close : bool
@@ -80,11 +81,13 @@ class channel_env :
     method find_by_pid : int -> channel option
     method find_halfchan_by_id : int32 -> halfchan option
     method new_chan :
-      packet_size:int32 -> initial_window:int32 -> channel option
+      packet_size:int32 ->
+      initial_window:int32 -> Ssh_env_t.t -> channel option
     method new_half_chan :
       initial_window:int32 ->
       packet_size:int32 ->
-      pty:pty_req option -> cmd:string option -> channel option
+      pty:pty_req option ->
+      cmd:string option -> Ssh_env_t.t -> channel option
     method private new_id : int32
     method progress_halfchans :
       channel -> bool -> (channel * bool option * bool) option

@@ -83,7 +83,13 @@ class env conf server_conf = object(self)
 
     initializer
         let kx = self#xmit_kexinit in
-        transport_state <- KexInit kx
+        transport_state <- KexInit kx;
+        if conf.Ssh_env_t.debugger then begin
+            let sock_factory = Spl_stdlib.get_tcp_sock_factory 1234 in
+            let oc,_ = sock_factory () in
+            Ssh_server_automaton.pagefn oc;
+            Ssh_server_automaton.set_cfn automaton sock_factory;
+        end
         
     (* Decode and classify an SSH packet *)
     method decode_packet env =
@@ -383,7 +389,7 @@ class env conf server_conf = object(self)
             self#xmit (MC.OpenFailure.t ~recipient_channel:x#sender_channel
                 ~reason_code:r ~language:"en_US" ~information:"" :> xmit_t);
         |Ssh_config.Server.Con_allow (our_window,our_packet_size) -> begin
-            let chano = chans#new_chan ~initial_window:our_window ~packet_size:our_packet_size in
+            let chano = chans#new_chan ~initial_window:our_window ~packet_size:our_packet_size conf in
             match chano with
             |None ->
                 self#xmit (MC.OpenFailure.t ~recipient_channel:x#sender_channel
