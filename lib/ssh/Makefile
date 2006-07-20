@@ -10,5 +10,6 @@ SPL_STATECALL0= ssh_statecalls
 MPL_FLAGS=	-s
 MPL_AUTOGEN=	ssh_message
 MELANGE_LIBS=	ounix
+DISTS=		cryptokit
 
 include ../../mk/lib.mk
