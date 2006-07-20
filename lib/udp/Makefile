@@ -1,19 +1,5 @@
-OCAMLMAKEFILE= ../../OCamlMakefile
-MPL=../../tools/mpl
-MPLC=$(MPL)/mplc
+RESULT=		udp
+MPL_AUTOGEN=	udp
 
-SOURCES= udp.ml
-RESULT= udp
-LIBDIRS= ../ounix $(MPL)
-INCDIRS= ../ounix $(MPL)
-TRASH= udp.ml
-
-native: ncl
-bytecode: bcl
-
-depend:
-	cd ../../tools/mpl && ${MAKE} depend all
-	${MPLC} udp.mpl > udp.ml
-
-include $(OCAMLMAKEFILE)
+include ../../mk/lib.mk
 

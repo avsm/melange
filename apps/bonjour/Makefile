@@ -1,19 +1,9 @@
-# $Id$
+SOURCES= bonjour_app.ml
+RESULT= bonjour
 
-OCAMLMAKEFILE = ../../OCamlMakefile
+USE_MPL=	Yes
+LIBS=		unix str
+MELANGE_LIBS=	ounix dns
 
-depend:
-	cd ../../lib/dns && LIBS= $(MAKE) depend native bytecode
+include ../../mk/prog.mk
 
- 
-SOURCES = bonjour_app.ml
-RESULT = bonjour
-LIBS= unix str ounix mpl_stdlib dns
-LIBDIRS=../../lib/dns ../../tools/mpl ../../lib/ounix
-INCDIRS=../../lib/dns ../../tools/mpl ../../lib/ounix
-
-native: nc
-bytecode: bc
-
-
-include $(OCAMLMAKEFILE)

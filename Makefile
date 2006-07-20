@@ -1,9 +1,10 @@
-SUBDIRS=dist lib tools apps
+SUBDIRS=dist tools lib apps
 
 world:
+	@if [ ! -f config.mk ]; then echo Run ./configure first; exit 1; fi
 	$(MAKE) clean
 	$(MAKE) depend
-	$(MAKE) native
+	$(MAKE) all
 
 clean:
 	rm -f config.log config.status

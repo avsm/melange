@@ -1,19 +1,5 @@
-OCAMLMAKEFILE= ../../OCamlMakefile
-MPL=../../tools/mpl
-MPLC=$(MPL)/mplc
+MPL_AUTOGEN=	ethernet
+RESULT=		ethernet
 
-SOURCES= ethernet.ml
-RESULT= ethernet
-LIBDIRS= ../ounix $(MPL)
-INCDIRS= ../ounix $(MPL)
-TRASH= ethernet.ml
-
-native: ncl
-bytecode: bcl
-
-depend:
-	cd ../../tools/mpl && ${MAKE} depend all
-	${MPLC} ethernet.mpl > ethernet.ml
-
-include $(OCAMLMAKEFILE)
+include ../../mk/lib.mk
 

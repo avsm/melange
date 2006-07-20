@@ -1,28 +1,10 @@
-# $Id$
-
-include ../../config.mk
-OCAMLMAKEFILE = ../../OCamlMakefile
- 
 SOURCES = server.ml ssh_openssh_formats.ml sshd.ml
 RESULT = sshd
 
-# for Linux/openpty
-LIBS= unix nums cryptokit str ounix mpl_stdlib spl_stdlib ssh
-LIBDIRS=../../lib/ssh ../../tools/mpl ../../lib/ounix ../../tools/spl \
-	../../dist/cryptokit
-INCDIRS=../../lib/ssh ../../tools/mpl ../../lib/ounix ../../tools/spl \
-	../../dist/cryptokit
+LIBS= 		unix nums cryptokit str
+USE_MPL=	Yes
+USE_SPL=	Yes
+MELANGE_LIBS=	ounix ssh
+DISTS=		cryptokit
 
-native: nc
-bytecode: bc
-
-all:
-	$(MAKE) native
-	$(MAKE) bytecode
-
-depend:
-	cd ../../lib/ssh && $(MAKE) depend native bytecode
-	cd ../../dist && $(MAKE) all
-
-
-include $(OCAMLMAKEFILE)
+include ../../mk/prog.mk

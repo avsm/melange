@@ -1,4 +1,5 @@
 SUBDIRS=ounix ipv4 ethernet udp dhcp pcap ounix ssh dns
+BUILD_ROOT=..
 
 all:
 %:

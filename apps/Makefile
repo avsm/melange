@@ -1,6 +1,4 @@
-SUBDIRS=deens sshd bonjour
+SUBDIRS=deens sshd bonjour mldig
 
-native:
-bytecode:
 %:
 	for i in $(SUBDIRS); do (cd $$i && $(MAKE) $@); done
