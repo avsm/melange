@@ -17,7 +17,7 @@
 
 %{
     open Config_location
-    open Config
+    open Config_t
     open Printf
 
     let parse_error msg =
@@ -34,7 +34,7 @@
 %token <int * Config_location.t> INT
 
 %start main
-%type <Config.var_vals> main
+%type <Config_t.var_vals> main
 %%
 main:
 | config_lines EOF { $1 }
@@ -45,23 +45,24 @@ config_lines:
 ;
 config_line:
 | IDENTIFIER EQUALS config_value SEMICOLON {
-    {Config.v_name=(id $1); v_ty=Config.T_unknown; v_val=$3}
+    {Config_t.v_name=(id $1); v_ty=Config_t.T_unknown; v_val=$3; v_loc=(loc $1)}
   }
 | IDENTIFIER EQUALS LBRACKET config_list_values RBRACKET SEMICOLON {
-	{Config.v_name=(id $1); v_ty=Config.T_unknown; v_val=$4}
+	{Config_t.v_name=(id $1); v_ty=Config_t.T_unknown; v_val=$4; v_loc=(loc $1)}
   }
 ;
 config_value:
-| TRUE { Config.V_boolean true }
-| FALSE { Config.V_boolean false }
-| STRING { Config.V_string (id $1) }
-| INT { Config.V_int (id $1) }
+| TRUE { Config_t.V_boolean true }
+| FALSE { Config_t.V_boolean false }
+| STRING { Config_t.V_string (id $1) }
+| INT { Config_t.V_int (id $1) }
+| VARIANT { Config_t.V_variant (id $1) }
 ;
 config_list_values:
-| { Config.V_empty_list }
-| config_variant_list { Config.V_variant_list $1 }
-| config_string_list { Config.V_string_list $1 }
-| config_int_list { Config.V_int_list $1 }
+| { Config_t.V_empty_list }
+| config_variant_list { Config_t.V_variant_list $1 }
+| config_string_list { Config_t.V_string_list $1 }
+| config_int_list { Config_t.V_int_list $1 }
 ;
 config_variant_list:
 | VARIANT { [id $1] }
