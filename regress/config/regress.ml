@@ -1,27 +1,56 @@
 
 open Printf
+open Config_t
 
-type regress_result =
-    |Pass of Config.var_vals
-    |Fail of string
-    
-let try_parse file =
-    let fin = open_in file in
-    let lexbuf = Lexing.from_channel fin in
-    Config_location.start_parse file; 
-    try Pass (Config_parser.main Config_lexer.token lexbuf)
-    with Config_location.Syntax_error l ->
-        Fail (sprintf "Syntax error%s near token '%s'"
-        (Config_location.string_of_location l) (Lexing.lexeme lexbuf))
+(* We expect the test to either pass or fail at a particular line *)
+type result =
+	|Pass
+	|Fail of int
+	
+let regress_files = [
+	("strings.conf", Pass,
+	  [
+		"config1", T_string;
+		"config2", T_string;
+		"config3", T_string;
+		"config4.blah", T_string;
+		"config4.blah2", T_string;
+  	  ]
+    );
+    ("variants.conf", Pass,
+	  [
+		"config1", (T_variant ["Foo";"Bar";"Alpha"]);
+		"config2", (T_variant ["Bar";"Foo"]);
+		"config3", (T_variant_list ["Foo";"Bar";"Alpha"]);
+		"config4", (T_variant_list ["Foo";"Bar";"Alpha"]);
+	  ]
+	);
+    ("variants.conf", (Fail 3),
+	  [
+		"config1", (T_variant ["Bar";"Alpha"]);
+	  ]
+	);
+]
 
-let regress_files = [ "strings.conf" ]
-    
+(* ex=expected result, ac=actual result *)
+let result file ex ac =
+	let ok () = printf "===> OK: %s\n%!" file in
+	let no x = printf "===> FAIL: %s: (%s)\n%!" file x in
+	match ex,ac with
+	|Pass,Pass -> ok ()
+	|Fail x,Fail y ->
+		if x = y then ok () else
+			no (sprintf "Expected fail at %d, actually failed at %d" x y)
+	|Pass,Fail x -> no (sprintf "Expected pass, actually failed at %d" x)
+	|Fail x,Pass -> no (sprintf "Expected fail at %d, actually passed" x)
+		
 let _ =
-    List.iter (fun file ->
-        printf "Parsing: %s\n" file;
-        match try_parse file with
-        |Pass vars ->
-            printf "pass:\n";
-            print_endline (Config.string_of_var_vals vars);
-        |Fail err -> printf "error: %s\n" err;
+    List.iter (fun (file,res,ty) ->
+        printf "===> Testing: %s\n" file;
+		try
+		let v = new Config.config ty file in
+		v#dump;
+		result file res Pass;
+		with
+		Config.Error (l,s) -> print_endline s; result file res (Fail l)
     ) regress_files
