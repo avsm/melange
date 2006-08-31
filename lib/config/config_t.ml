@@ -43,7 +43,7 @@ let string_of_type_atom = function
 type var_type = {
     t_name: string;
     t_atom: type_atom;
-    t_descr: string;
+    t_descr: string option;
     t_default: val_atom option;
 }
 and val_atom =

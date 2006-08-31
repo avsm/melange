@@ -10,24 +10,24 @@ type result =
 let regress_files = [
 	("strings.conf", Pass,
 	  [
-		{t_name="config1"; t_atom=T_string; t_descr=""; t_default=None};
-		{t_name="config2"; t_atom=T_string; t_descr=""; t_default=None};
-		{t_name="config3"; t_atom=T_string; t_descr=""; t_default=None};
-		{t_name="config4.blah"; t_atom=T_string; t_descr=""; t_default=None};
-		{t_name="config4.blah2"; t_atom=T_string; t_descr=""; t_default=None};
+		{t_name="config1"; t_atom=T_string; t_descr=None; t_default=None};
+		{t_name="config2"; t_atom=T_string; t_descr=None; t_default=None};
+		{t_name="config3"; t_atom=T_string; t_descr=None; t_default=None};
+		{t_name="config4.blah"; t_atom=T_string; t_descr=None; t_default=None};
+		{t_name="config4.blah2"; t_atom=T_string; t_descr=None; t_default=None};
   	  ]
     );
     ("variants.conf", Pass,
 	  [
-		{t_name="config1"; t_atom=(T_variant ["Foo";"Bar";"Alpha"]); t_descr=""; t_default=None};
-		{t_name="config2"; t_atom=(T_variant ["Bar";"Foo"]); t_descr=""; t_default=None};
-		{t_name="config3"; t_atom=(T_variant_list ["Foo";"Bar";"Alpha"]); t_descr=""; t_default=None};
-		{t_name="config4"; t_atom=(T_variant_list ["Foo";"Bar";"Alpha"]); t_descr=""; t_default=None};
+		{t_name="config1"; t_atom=(T_variant ["Foo";"Bar";"Alpha"]); t_descr=None; t_default=None};
+		{t_name="config2"; t_atom=(T_variant ["Bar";"Foo"]); t_descr=None; t_default=None};
+		{t_name="config3"; t_atom=(T_variant_list ["Foo";"Bar";"Alpha"]); t_descr=None; t_default=None};
+		{t_name="config4"; t_atom=(T_variant_list ["Foo";"Bar";"Alpha"]); t_descr=None; t_default=None};
 	  ]
 	);
     ("variants.conf", (Fail 3),
 	  [
-		{t_name="config1"; t_atom=(T_variant ["Bar";"Alpha"]); t_descr=""; t_default=None};
+		{t_name="config1"; t_atom=(T_variant ["Bar";"Alpha"]); t_descr=None; t_default=None};
 	  ]
 	);
 ]
