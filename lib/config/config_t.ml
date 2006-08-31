@@ -40,14 +40,13 @@ let string_of_type_atom = function
     |T_variant_list vs -> sprintf "variant list (%s)" (String.concat "|" vs)
     |T_unknown -> raise (Internal_error "T_unknown found in config definition")
 
-type var_type = (string * type_atom)
-
-let string_of_var_type ((x,t):var_type) =
-    sprintf "name=%s ty=%s" x (string_of_type_atom t)
-
-type var_types = var_type list
-
-type val_atom =
+type var_type = {
+    t_name: string;
+    t_atom: type_atom;
+    t_descr: string;
+    t_default: val_atom option;
+}
+and val_atom =
     |V_string of string
     |V_string_list of string list
     |V_int of int
@@ -57,9 +56,9 @@ type val_atom =
     |V_variant_list of string list
 	|V_empty_list
 
-let string_of_list x = sprintf "[%s]" (String.concat ", " x)
-    
-let rec string_of_val_atom = function
+let rec string_of_val_atom = 
+    let string_of_list x = sprintf "[%s]" (String.concat ", " x) in
+    function
     |V_string x -> sprintf "\"%s\"" x
     |V_string_list xl -> string_of_list 
         (List.map (fun x -> string_of_val_atom (V_string x)) xl)
@@ -70,6 +69,8 @@ let rec string_of_val_atom = function
     |V_variant v -> v
     |V_variant_list vs -> string_of_list vs
 	|V_empty_list -> "[]"
+
+type var_types = var_type list
 
 type var_val = {
     v_name: string;
@@ -111,12 +112,12 @@ let check_variants loc is vs =
 	List.iter (fun v -> if not (List.mem v is) then raise (Type_error (loc,
 		(sprintf "Unknown variant '%s', expected (%s)" v (String.concat "|" is))))) vs
 	
-let resolve_type ty v =
+let resolve_type (ty:var_types) v =
 	let id = v.v_name in
-	let conf_ty = try List.assoc id ty with Not_found ->
+	let conf_ty = try List.find (fun t -> t.t_name = id) ty with Not_found ->
 		raise (Type_error (v.v_loc, (sprintf "Unknown variable '%s'" id)))
 	in
-	let v = {v with v_ty=conf_ty} in
+	let v = {v with v_ty=conf_ty.t_atom} in
 	(* is the type the type we actually want? *)
 	let () = match valid_type v with
 	| true -> ()

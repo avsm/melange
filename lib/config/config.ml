@@ -24,9 +24,9 @@ let do_parse ty fname =
 	let fin = open_in fname in
 	let lexbuf = Lexing.from_channel fin in
 	try
-   	let () = Config_location.start_parse fname in
-	let raw_vals = Config_parser.main Config_lexer.token lexbuf in
-	type_check ty raw_vals
+		Config_location.start_parse fname;
+		let raw_vals = Config_parser.main Config_lexer.token lexbuf in
+		type_check ty raw_vals
     with
 	|Config_location.Syntax_error l ->
         raise (Error (l.Config_location.line_num,(sprintf "Syntax error%s near token '%s'"
