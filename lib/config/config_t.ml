@@ -119,11 +119,9 @@ let resolve_type (ty:var_types) v =
 	in
 	let v = {v with v_ty=conf_ty.t_atom} in
 	(* is the type the type we actually want? *)
-	let () = match valid_type v with
-	| true -> ()
-	| false -> raise (Type_error (v.v_loc,
-		(sprintf "%s: Expected %s, found %s" id (string_of_type_atom v.v_ty)
-		(string_of_val_atom v.v_val)))) in
+	if not (valid_type v) then 
+	    raise (Type_error (v.v_loc, (sprintf "%s: Expected %s, found %s"
+	        id (string_of_type_atom v.v_ty)(string_of_val_atom v.v_val))));
 	match v.v_ty,v.v_val with
     |T_int (a,b), (V_int i) -> check_int_range v.v_loc a b i; v
     |T_int (a,b), (V_int_list il) -> List.iter (check_int_range v.v_loc a b) il; v

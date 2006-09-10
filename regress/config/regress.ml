@@ -50,6 +50,7 @@ let _ =
 		try
 		let v = new Config.config ty file in
 		v#dump;
+	    print_endline (Config.default_config ty);
 		result file res Pass;
 		with
 		Config.Error (l,s) -> print_endline s; result file res (Fail l)

@@ -35,6 +35,16 @@ let do_parse ty fname =
         raise (Error (l.Config_location.line_num,(sprintf "Type error%s %s"
         	(Config_location.string_of_location l) str)))
 
+let default_config (ty:var_types) =
+    String.concat "\n" (List.flatten (List.map (fun t ->
+        let comment = sprintf "# %s [%s]" (match t.t_descr with |None -> "" |Some x -> x)
+            (string_of_type_atom t.t_atom) in
+        let base = match t.t_default with
+        |Some v -> sprintf "# %s = %s;" t.t_name (string_of_val_atom v)
+        |None -> sprintf "%s = " t.t_name in
+        [comment; base]
+    ) ty))
+    
 class config (ty:var_types) (fname:string) =
 	let checked_vals = do_parse ty fname in
 	object(self)
