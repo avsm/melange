@@ -124,7 +124,7 @@ let total_size env = String.length env.__bbuf
 
 let incr_pos env amt =
    env.__bpos <- env.__bpos + amt;
-   env.__bsz <- max env.__bsz env.__bpos;
+   env.__bsz <- (if env.__bsz > env.__bpos then env.__bsz else env.__bpos);
    if env.__bpos + env.__bbase > !(env.__blen) then
       env.__blen := env.__bpos + env.__bbase
 
@@ -185,6 +185,8 @@ module Mpl_byte = struct
     let to_int = int_of_char
     let of_int = char_of_int
     let prettyprint x = string_of_int (int_of_char x)
+        
+    let null = of_char '\000'
 end
 
 module Mpl_uint16 = struct
@@ -413,8 +415,8 @@ exception Bad_dns_label
 module Mpl_dns_label = struct
    type t = int * string list (* size * (bits list) *)
    
-   let unmarshal_labels = Hashtbl.create 1
-   let marshal_labels = Hashtbl.create 1
+   let (unmarshal_labels:((int, string) Hashtbl.t)) = Hashtbl.create 1
+   let (marshal_labels:(string list, int option) Hashtbl.t) = Hashtbl.create 1
    
    let marshal_base = ref 0
    let unmarshal_base = ref 0
@@ -476,7 +478,7 @@ module Mpl_dns_label = struct
             insert_string env bit x;
             fn r;
          end
-      |[] -> Mpl_byte.__marshal env (Mpl_byte.of_char '\000') in
+      |[] -> Mpl_byte.__marshal env Mpl_byte.null in
       fn t;
       let size = curpos env - start_pos in
 (*      print_endline (Printf.sprintf "label=%s (%d) psz=%d size=%d\n" (String.concat "." t) (Hashtbl.hash t) psz size); *)
