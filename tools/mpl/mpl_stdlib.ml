@@ -56,6 +56,7 @@ let null_fillfn _ _ _ = 0
 
 type env = {
     __bbuf: string;           (* data *)
+    __btlen: int;             (* total length of data, String.length bbuf *)
     __blen: int ref;          (* total length of valid data *)
     __bbase: int;             (* start pos in buffer *)
     mutable __bsz: int;       (* valid length of data, relative to bbase *)
@@ -80,7 +81,8 @@ let set_network_endian = set_big_endian
 
 let new_env ?(fillfn=null_fillfn) ?(length=0) buf =
     let blen = ref length in
-    {__bbase=0; __bbuf=buf; __bsz=0; __bpos=0; __blen=blen; __fillfn=fillfn}
+    {__bbase=0; __bbuf=buf; __bsz=0; __bpos=0; __blen=blen; __fillfn=fillfn;
+      __btlen=(String.length buf)}
 
 let set_fillfn env fn = env.__fillfn <- fn
 let default_fillfn env = env.__fillfn <- null_fillfn
@@ -102,7 +104,7 @@ let fill ?(min=1) env fd =
     rd := 0;
     while !rd < min do 
        let r = Unix.read fd env.__bbuf !(env.__blen)
-          (String.length env.__bbuf - !(env.__blen)) in
+          (env.__btlen - !(env.__blen)) in
        if r = 0 then raise IO_error else env.__blen := !(env.__blen) + r;
        rd := !rd + r;
     done;
@@ -113,14 +115,14 @@ let fill_string env buf =
     String.blit buf 0 env.__bbuf !(env.__blen) (String.length buf)
 
 let env_recv_fn env fn =
-    let r,o = fn env.__bbuf (env.__bbase + env.__bpos) (String.length env.__bbuf) in
+    let r,o = fn env.__bbuf (env.__bbase + env.__bpos) env.__btlen in
     env.__blen := !(env.__blen) + r;
     env.__bsz <- !(env.__blen);
     o
 
 let env_send_fn env fn = fn env.__bbuf 0 !(env.__blen)
 let size env = env.__bsz
-let total_size env = String.length env.__bbuf
+let total_size env = env.__btlen
 
 let incr_pos env amt =
    env.__bpos <- env.__bpos + amt;
@@ -237,7 +239,7 @@ module Mpl_uint16 = struct
 
     let dissect fn acc env =
         let bp = env.__bbase + env.__bpos in
-        assert (env.__bsz + env.__bbase < (String.length env.__bbuf));
+        assert (env.__bsz + env.__bbase < env.__btlen);
         let amt = env.__bsz - env.__bpos in
         let n = amt / 2 in
         let acc = ref acc in
@@ -451,7 +453,7 @@ module Mpl_dns_label = struct
       let abspos env = env.__bbase + env.__bpos - !marshal_base in
       let start_pos = curpos env in
       let insert_string env bit x =
-          Hashtbl.replace marshal_labels x (Some (abspos env));
+          Hashtbl.add marshal_labels x (Some (abspos env));
           Mpl_byte.__marshal env (Mpl_byte.of_int (String.length bit));
           Mpl_raw.__marshal env bit
       in
