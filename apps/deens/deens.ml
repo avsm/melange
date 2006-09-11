@@ -43,14 +43,25 @@ let get_answer env (qname,qtype) id =
         ~authority:ans.DQ.authority
         ~additional:ans.DQ.additional env) 
 
+(* utility function for non-polymorphic comparison of string lists *)
+let string_list_equals a b = 
+    try
+        List.for_all2 (fun a b -> String.compare a b = 0) a b
+    with _ -> false
+
 (* Space leaking hash table cache, always grows *)
-let cache = Hashtbl.create 1
+module Leaking_cache = Hashtbl.Make (struct
+    type t = string list * Dns.Questions.qtype_t
+    let equal ((a,q1):t) ((b,q2):t) = (q1 = q2) && (string_list_equals a b)
+    let hash = Hashtbl.hash
+end)
+let cache = Leaking_cache.create 1
 let memofn env s frm qargs id =
-    let resp = try Hashtbl.find cache qargs
+    let resp = try Leaking_cache.find cache qargs
     with Not_found -> begin
         get_answer env qargs id;
         let str = M.string_of_env env in
-        Hashtbl.add cache qargs str;
+        Leaking_cache.add cache qargs str;
         str
     end in
     String.set resp 0 (char_of_int ((id lsr 8) land 255));
@@ -61,7 +72,8 @@ let memofn env s frm qargs id =
    is needed but does not leak space *)
 module Query_res = struct
     type t = ((string list * Dns.Questions.qtype_t) * string option)
-    let equal ((a,_):t) ((b,_):t) = (a=b)
+    let equal (((sl1,qt1),_):t) (((sl2,qt2),_):t) =
+        (qt1 = qt2) && (string_list_equals sl1 sl2)
     let hash ((a,_):t) = Hashtbl.hash a
 end     
 module Cache_hash = Weak.Make(Query_res)
