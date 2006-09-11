@@ -1,6 +1,6 @@
 LDFLAGS=@LDFLAGS@
 CFLAGS=@CFLAGS@
-CLIBS=@LIBS@
+CLIBS=$(subst -l,,@LIBS@)
 DEFS=@DEFS@
 CC=@CC@
 PREFIX=@prefix@
