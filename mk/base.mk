@@ -48,8 +48,8 @@ LIBDIRS+= $(extra_mel_libs)
 INCDIRS+= $(extra_mel_libs)
 
 depend::
-	@for i in $(MELANGE_LIBS); do $(MAKE) -C $(BUILD_ROOT)/lib/$$i depend all; done
-	@for i in $(DISTS); do $(MAKE) -C $(BUILD_ROOT)/dist/$$i -f Makefile.wrapper all; done
+	@set -e; for i in $(MELANGE_LIBS); do $(MAKE) -C $(BUILD_ROOT)/lib/$$i depend all; done
+	@set -e; for i in $(DISTS); do $(MAKE) -C $(BUILD_ROOT)/dist/$$i -f Makefile.wrapper all; done
 
 f_spl = $(call patsubst,%,%.spl,$1)
 f_mpl = $(call patsubst,%,%.mpl,$1)
