@@ -429,7 +429,7 @@ module Mpl_dns_label = struct
    end)
    let unmarshal_labels = UnmarshalHashtbl.create 1
    let marshal_labels = MarshalHashtbl.create 1
-   
+
    let marshal_base = ref 0
    let unmarshal_base = ref 0
    let init_unmarshal env = UnmarshalHashtbl.clear unmarshal_labels; unmarshal_base := env.__bbase
@@ -499,26 +499,38 @@ module Mpl_dns_label = struct
    let unmarshal env : t =
       let base_loc = env.__bbase + env.__bpos in
       let start_size = curpos env in
-      let rec fn acc =
+      let rec fn acc toadd =
          let sz = Mpl_byte.to_int (Mpl_byte.unmarshal env) in
          let ty = sz lsr 6 in
          let cnt = sz land 0b111111 in
          match ty,cnt with
-         |0b00,0 (* eol *) -> acc
+         |0b00,0 (* eol *) ->
+            (* add any bits to the unmarshal list *)
+            let _ = List.fold_left2 (fun acc str off ->
+                let acc = str :: acc in
+                UnmarshalHashtbl.add unmarshal_labels off acc; 
+                acc
+            ) [] acc toadd in
+            acc
          |0b00,x (* lab *) -> 
             let off = env.__bbase + env.__bpos - 1 - !unmarshal_base in
             let str = Mpl_raw.at env (curpos env) cnt in
             skip env cnt;
-            UnmarshalHashtbl.add unmarshal_labels off str;
-            fn (str :: acc)
+            fn (str :: acc) (off :: toadd)
          |0b11,x (* offset *) ->
             let off = (x lsl 8) + (Mpl_byte.to_int (Mpl_byte.unmarshal env)) in
             if off >= base_loc then raise Bad_dns_label;
-            let str = try UnmarshalHashtbl.find unmarshal_labels off
+            let remainder = try UnmarshalHashtbl.find unmarshal_labels off
                with Not_found -> raise Bad_dns_label in
-            str :: acc
+            let _ = List.fold_left2 (fun acc str off ->
+                let acc = str :: acc in
+                let add = acc @ remainder in
+                UnmarshalHashtbl.add unmarshal_labels off add;
+                acc
+            ) [] acc toadd in
+            List.rev_append remainder acc
          |_ -> raise Bad_dns_label in
-      let res = List.rev (fn []) in
+      let res = List.rev (fn [] []) in
       let endsz = curpos env - start_size in
       endsz,res
    
