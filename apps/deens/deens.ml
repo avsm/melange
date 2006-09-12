@@ -43,16 +43,10 @@ let get_answer env (qname,qtype) id =
         ~authority:ans.DQ.authority
         ~additional:ans.DQ.additional env) 
 
-(* utility function for non-polymorphic comparison of string lists *)
-let string_list_equals a b = 
-    try
-        List.for_all2 (fun a b -> String.compare a b = 0) a b
-    with _ -> false
-
 (* Space leaking hash table cache, always grows *)
 module Leaking_cache = Hashtbl.Make (struct
     type t = string list * Dns.Questions.qtype_t
-    let equal ((a,q1):t) ((b,q2):t) = (q1 = q2) && (string_list_equals a b)
+    let equal (a:t) (b:t) = a = b
     let hash = Hashtbl.hash
 end)
 let cache = Leaking_cache.create 1
@@ -72,8 +66,7 @@ let memofn env s frm qargs id =
    is needed but does not leak space *)
 module Query_res = struct
     type t = ((string list * Dns.Questions.qtype_t) * string option)
-    let equal (((sl1,qt1),_):t) (((sl2,qt2),_):t) =
-        (qt1 = qt2) && (string_list_equals sl1 sl2)
+    let equal ((a,_):t) ((b,_):t) = a = b
     let hash ((a,_):t) = Hashtbl.hash a
 end     
 module Cache_hash = Weak.Make(Query_res)
