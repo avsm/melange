@@ -416,27 +416,17 @@ exception Bad_dns_label
 
 module Mpl_dns_label = struct
    type t = int * string list (* size * (bits list) *)
-   
-   module UnmarshalHashtbl = Hashtbl.Make (struct
-        type t = int
-        let equal a b = a = b
-        let hash = Hashtbl.hash
-   end)
-   module MarshalHashtbl = Hashtbl.Make (struct
-        type t = string list
-        let equal a b = try List.for_all2 (fun a b -> String.compare a b = 0) a b with _ -> false
-        let hash = Hashtbl.hash
-   end)
-   let unmarshal_labels = UnmarshalHashtbl.create 1
-   let marshal_labels = MarshalHashtbl.create 1
 
+   let (unmarshal_labels:((int, string list) Hashtbl.t)) = Hashtbl.create 1
+   let (marshal_labels:(string list, int option) Hashtbl.t) = Hashtbl.create 1
+   
    let marshal_base = ref 0
    let unmarshal_base = ref 0
-   let init_unmarshal env = UnmarshalHashtbl.clear unmarshal_labels; unmarshal_base := env.__bbase
-   let init_marshal env  = MarshalHashtbl.clear marshal_labels; marshal_base := env.__bbase
+   let init_unmarshal env = Hashtbl.clear unmarshal_labels; unmarshal_base := env.__bbase
+   let init_marshal env  = Hashtbl.clear marshal_labels; marshal_base := env.__bbase
 
    let dump () =
-        MarshalHashtbl.iter (fun k v -> Printf.printf "%s=%s " (String.concat "." k) (match v with |None -> "X" |Some off -> string_of_int off)) marshal_labels;
+        Hashtbl.iter (fun k v -> Printf.printf "%s=%s " (String.concat "." k) (match v with |None -> "X" |Some off -> string_of_int off)) marshal_labels;
         print_newline ()
         
 
@@ -444,12 +434,12 @@ module Mpl_dns_label = struct
       (* crap, we need to guess the length before we marshal it! *)
       let rec fn am = function
       |bit::r as x -> 
-	 let found = MarshalHashtbl.mem marshal_labels x in 
+	 let found = Hashtbl.mem marshal_labels x in 
          if comp && found then
              am + 2
          else begin
              (* insert embryonic marker *)
-             if (not found) then MarshalHashtbl.add marshal_labels x None;
+             if (not found) then Hashtbl.add marshal_labels x None;
              fn (String.length bit + 1 + am) r; (* for length of bit *)
          end
       |[] -> am + 1 in
@@ -463,7 +453,7 @@ module Mpl_dns_label = struct
       let abspos env = env.__bbase + env.__bpos - !marshal_base in
       let start_pos = curpos env in
       let insert_string env bit x =
-          MarshalHashtbl.add marshal_labels x (Some (abspos env));
+          Hashtbl.add marshal_labels x (Some (abspos env));
           Mpl_byte.__marshal env (Mpl_byte.of_int (String.length bit));
           Mpl_raw.__marshal env bit
       in
@@ -471,7 +461,7 @@ module Mpl_dns_label = struct
       let rec fn = function
       |bit::r as x ->
          if comp then begin
-            try match MarshalHashtbl.find marshal_labels x with
+            try match Hashtbl.find marshal_labels x with
             |None -> begin (* embryonic entry so insert directly and record the offset *)
                 insert_string env bit x;
                 fn r;
@@ -508,7 +498,7 @@ module Mpl_dns_label = struct
             (* add any bits to the unmarshal list *)
             let _ = List.fold_left2 (fun acc str off ->
                 let acc = str :: acc in
-                UnmarshalHashtbl.add unmarshal_labels off acc; 
+                Hashtbl.add unmarshal_labels off acc; 
                 acc
             ) [] acc toadd in
             acc
@@ -520,12 +510,12 @@ module Mpl_dns_label = struct
          |0b11,x (* offset *) ->
             let off = (x lsl 8) + (Mpl_byte.to_int (Mpl_byte.unmarshal env)) in
             if off >= base_loc then raise Bad_dns_label;
-            let remainder = try UnmarshalHashtbl.find unmarshal_labels off
+            let remainder = try Hashtbl.find unmarshal_labels off
                with Not_found -> raise Bad_dns_label in
             let _ = List.fold_left2 (fun acc str off ->
                 let acc = str :: acc in
                 let add = acc @ remainder in
-                UnmarshalHashtbl.add unmarshal_labels off add;
+                Hashtbl.add unmarshal_labels off add;
                 acc
             ) [] acc toadd in
             List.rev_append remainder acc
