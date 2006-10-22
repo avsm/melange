@@ -54,4 +54,26 @@ let simple_lookup qtype qname =
           ~truncation:0 ~rd:1 ~ra:0 
           ~questions:qs ~answers:[] ~authority:[] ~additional:[]
 
+let a_record hostname ip = 
+    Dns_rr.A.t 
+	~name:hostname 
+	~aclass:`IN
+	~ttl:120l (* seconds, default for hostnames *)
+	~ip:ip 
 
+(** A probe is a question containing the proposed answer. This is the 
+    probe for an A record  *)
+let probe_ptr hostname ip = 
+    let qs = [Dns.Questions.t ~qname:hostname ~qtype:`A ~qclass:`IN] in
+    let answers = [Dns.Answers.t ~rr:(`A (a_record hostname ip))] in
+    Dns.t ~id:(next_transaction_id())
+          ~qr:`Query ~opcode:`Query ~authoritative:0 ~rcode:`NoError
+          ~truncation:0 ~rd:0 ~ra:0 
+          ~questions:qs ~answers:answers ~authority:[] ~additional:[]
+(*
+let response hostname ip = 
+    Dns.t ~id:(next_transaction_id())
+          ~qr:`Response ~opcode:`Response ~authoritative:1 ~rcode:`NoError
+          ~truncation:0 ~rd:0 ~ra:0 
+          ~questions:[] ~answers:answers ~authority:[] ~additional:[]
+*)
