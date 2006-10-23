@@ -111,7 +111,7 @@ let do_service_requests s send_fn receive_fn isrequest_fn conflict_fn =
           match classify conflict_fn isrequest_fn [ receive_fn s ] with
           | [ req ], _ ->
 	    debug("Received request; multicasting response");
-            send_fn s
+            send_fn req s
           | _, _ -> ()
     done
 
@@ -233,24 +233,29 @@ let _ =
     (fun x -> output_string stderr ("Ignoring argument: " ^ x))
     (Printf.sprintf "generate mDNS/Bonjour queries; default mode: %s (see -h)" default);
 
-  let s = Bonjour.connect () in match !mode with
+  match !mode with
   | `AllServices ->  
+    let s = Bonjour.connect () in
     let all = fetch_all_services s in
     print_endline "List of unique service names found on the network:";
     NameSet.iter (fun name -> print_endline (String.concat "." name)) all
   | `Single x ->
+    let s = Bonjour.connect ~port:Bonjour.port () in
     let all = find_one_service s (dns_name_of_string x) in
     print_endline ("Results for " ^ x);
     SLSet.iter (fun x -> 
 		  print_endline ("  " ^ (String.concat "." x.host) ^ " : " ^ (string_of_int x.port));
 		  List.iter (fun x -> print_endline ("    " ^ x)) x.txt) all
   | `Register x ->
+    let s = Bonjour.connect ~port:Bonjour.port () in
     let us = dns_name_of_string x in
-    let localhost = uint32_of_string_ip "127.0.0.1" in
+    let localhost = uint32_of_string_ip "172.31.16.22" in
     print_endline "Attempting to register and defend RR:";
     Printf.printf "%s  120  IN A  %s\n" x (string_ip_of_uint32 localhost);
     print_endline "1. Sending initial probes";
     let probe = Bonjour.probe_ptr us localhost in
+    let response = Bonjour.response_ptr us localhost in
+
     let any f xs = Array.fold_left (||) false (Array.map f xs) in
     let any_rr f xs = Array.fold_left (||) false (Array.map (fun x -> f x#rr) xs) in
     let conflict_fn response = 
@@ -271,5 +276,5 @@ let _ =
     print_endline "2. Entering announcement phase";
     do_announce s (send_query probe) receive_response isrequest_fn conflict_fn;
     print_endline "3. Entering service mode";
-    do_service_requests s (send_query probe) receive_response isrequest_fn conflict_fn
+    do_service_requests s (fun req -> send_query (response req)) receive_response isrequest_fn conflict_fn
  
