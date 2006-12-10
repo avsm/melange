@@ -49,6 +49,7 @@ val env_send_fn : env -> (string -> int -> int -> 'a) -> 'a
 val env_fn : env -> (string -> int -> int -> 'a) -> 'a
 val remaining : env -> int
 val flush : env -> Unix.file_descr -> unit
+val sendto : env -> Unix.file_descr -> Unix.sockaddr -> unit
 
 type fillfn = string -> int -> int -> int
 val set_fillfn : env -> fillfn -> unit

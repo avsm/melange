@@ -154,6 +154,9 @@ let remaining env =
 let flush env fd =
     ignore(Unix.single_write fd env.__bbuf 0 !(env.__blen))
 
+let sendto env s t =
+    ignore(Unix.sendto s env.__bbuf 0 !(env.__blen) [] t)
+
 (* XXX These are slow implementations of byte/uint16/uint32/bit, to be replaced
    by C bindings when the dust settles and all else is stable - avsm *)
 module Mpl_byte = struct
