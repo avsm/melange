@@ -55,3 +55,5 @@ f_spl = $(call patsubst,%,%.spl,$1)
 f_mpl = $(call patsubst,%,%.mpl,$1)
 f_ml =  $(call patsubst,%,%.ml,$1)
 f_mli =  $(call patsubst,%,%.mli,$1)
+
+ANNOTATE := yes
