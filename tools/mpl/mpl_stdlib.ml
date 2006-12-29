@@ -48,8 +48,6 @@ exception IO_error
 exception Buffer_overflow
 
 let rd = ref 0
-let dbg x = ()
-let dbg = prerr_endline
 
 type fillfn = string -> int -> int -> int
 let null_fillfn _ _ _ = 0
@@ -74,9 +72,15 @@ type data = [
 ]
 
 type endian = Little_endian | Big_endian
+
 let endian = ref Big_endian
-let set_little_endian () = endian := Little_endian
-let set_big_endian () = endian := Big_endian
+
+let set_little_endian () =
+  endian := Little_endian
+  
+let set_big_endian () =
+  endian := Big_endian
+
 let set_network_endian = set_big_endian
 
 let new_env ?(fillfn=null_fillfn) ?(length=0) buf =
@@ -156,6 +160,11 @@ let flush env fd =
 
 let sendto env s t =
     ignore(Unix.sendto s env.__bbuf 0 !(env.__blen) [] t)
+
+let recvfrom env s fl =
+    let x,addr = Unix.recvfrom s env.__bbuf 0 env.__btlen fl in
+    env.__blen := x;
+    addr
 
 (* XXX These are slow implementations of byte/uint16/uint32/bit, to be replaced
    by C bindings when the dust settles and all else is stable - avsm *)
