@@ -28,14 +28,12 @@ tool_dep =
 ifeq ($(USE_MPL),Yes)
  LIBDIRS += $(BUILD_ROOT)/tools/mpl
  INCDIRS += $(BUILD_ROOT)/tools/mpl
- LIBS += mpl_stdlib
  tool_dep += $(MPLC)
 endif
 
 ifeq ($(USE_SPL),Yes)
  LIBDIRS += $(BUILD_ROOT)/tools/spl
  INCDIRS += $(BUILD_ROOT)/tools/spl
- LIBS += spl_stdlib
  tool_dep += $(SPLC)
 endif
 
