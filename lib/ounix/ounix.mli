@@ -10,6 +10,9 @@ val set_ip_multicast_loop : Unix.file_descr -> int -> unit
 (** Add the fd to the multicast group with address addr *)
 val join_multicast_group : Unix.file_descr -> Unix.inet_addr -> unit
 
+(** Convert socket address into a string *)
+val string_of_sock_addr : Unix.sockaddr -> string
+
 class type odescr =
   object
     method close : unit

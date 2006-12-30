@@ -67,6 +67,11 @@ let join_multicast_group fd addr =
   if Bindings.join_multicast_group fd msw lsw < 0
   then failwith (Printf.sprintf "Unable to join multicast group")
 
+let string_of_sock_addr = function
+  |ADDR_UNIX (path) ->
+    Printf.sprintf "\"%s\"" path
+  |ADDR_INET (server_addr, port) ->
+    Printf.sprintf "%s:%d" (string_of_inet_addr server_addr) port
 
 class type odescr = object
     method fd : file_descr
