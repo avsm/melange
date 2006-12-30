@@ -31,7 +31,13 @@ let dnstrie = DL.state.DL.db.DL.trie
 
 (* Specialise dns packet to a smaller closure *)
 let dnsfn = Dns.t ~qr:`Answer ~opcode:`Query ~truncation:0 ~rd:0 ~ra:0 
-    
+
+let log frm (dnsq:Dns.Questions.o) =
+    printf "%.0f: %s %s %s (%s)\n%!" (gettimeofday ()) (String.concat "." dnsq#qname)
+        (Dns.Questions.qtype_to_string dnsq#qtype)
+        (Dns.Questions.qclass_to_string dnsq#qclass)
+        (Ounix.string_of_sockaddr frm)
+
 let get_answer env (qname,qtype) id =
     let qname = List.map String.lowercase qname in  
     let ans = DQ.answer_query qname qtype dnstrie in
@@ -157,6 +163,7 @@ let _ =
         let frm = M.env_recv_fn env recvfn in
         let d = Dns.unmarshal env in
         let q = d#questions.(0) in
+        log frm d#questions.(0);
         replyfn frm (q#qname,q#qtype) d#id;
       with e -> prerr_endline ("Error: " ^ (Printexc.to_string e)) 
     done
