@@ -103,10 +103,13 @@ let _ =
 
     let fname = ref (Some "default.zones") in
     let memo = ref `None in
-    let port = ref 5353 in 
+    let port = ref 5353 in
+    let iface = ref None in 
     let parse = [
         "-f", Arg.String (fun x -> fname := Some x),
         "Filename for zones";
+        "-i", Arg.String (fun x -> iface := Some x),
+        "IP address to listen on";
         "-p", Arg.Int (fun x -> port := x),
         "Filename for zones";
         "-m", Arg.Unit (fun () -> memo := `Memo),
@@ -116,6 +119,10 @@ let _ =
     ] in
     let usagestr = "Usage: deens <options>" in    
     Arg.parse parse (fun _ -> ()) usagestr;
+    let interface = match !iface with
+    |None -> inet_addr_any
+    |Some ip -> try inet_addr_of_string ip with _ -> failwith "Invalid -i argument"
+    in
     let fin = open_in (match !fname with |None -> failwith "Need -f"
         |Some x -> x) in
     let num_zones = ref 0 in
@@ -126,7 +133,7 @@ let _ =
         incr num_zones;
     done with End_of_file -> ();
     prerr_endline (sprintf "Loaded %d zones" !num_zones);
-    let udp_descr = Unix.handle_unix_error Ounix.udp_listener !port in
+    let udp_descr = Unix.handle_unix_error (Ounix.udp_listener ~interface) !port in
     let senv = M.new_env (String.make 4000 '\000') in
     let env = M.new_env (String.make 4000 '\000') in
     let pid = Unix.getpid () in
