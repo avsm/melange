@@ -67,7 +67,7 @@ let join_multicast_group fd addr =
   if Bindings.join_multicast_group fd msw lsw < 0
   then failwith (Printf.sprintf "Unable to join multicast group")
 
-let string_of_sock_addr = function
+let string_of_sockaddr = function
   |ADDR_UNIX (path) ->
     Printf.sprintf "\"%s\"" path
   |ADDR_INET (server_addr, port) ->
