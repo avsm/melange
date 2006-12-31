@@ -30,6 +30,15 @@ let regress_files = [
 		{t_name="config1"; t_atom=(T_variant ["Bar";"Alpha"]); t_descr=None; t_default=None};
 	  ]
 	);
+    ("ip.conf", Pass,
+	  [
+		{t_name="config1"; t_atom=T_ip; t_descr=None; t_default=None};
+		{t_name="config2"; t_atom=T_ip; t_descr=None; t_default=None};
+		{t_name="config3"; t_atom=T_ip_list; t_descr=None; t_default=None};
+		{t_name="config4"; t_atom=T_ip_list; t_descr=None; t_default=None};
+ 	  ]
+	);
+ 
 ]
 
 (* ex=expected result, ac=actual result *)

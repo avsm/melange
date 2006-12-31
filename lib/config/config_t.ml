@@ -25,6 +25,8 @@ type type_atom =
     |T_string_list
     |T_int of (int * int)
     |T_int_list of (int * int)
+    |T_ip
+    |T_ip_list
     |T_boolean
     |T_variant of string list
     |T_variant_list of string list
@@ -35,6 +37,8 @@ let string_of_type_atom = function
     |T_string_list -> "string list"
     |T_int (min,max) -> sprintf "integer (range %d-%d)" min max
     |T_int_list (min,max) -> sprintf "integer list (range %d->%d)]" min max
+    |T_ip -> "ip"
+    |T_ip_list -> "ip list"
     |T_boolean -> "boolean"
     |T_variant vs -> sprintf "variant (%s)" (String.concat "|" vs)
     |T_variant_list vs -> sprintf "variant list (%s)" (String.concat "|" vs)
@@ -50,16 +54,22 @@ and val_atom =
     |V_string of string
     |V_string_list of string list
     |V_int of int
+    |V_ip of Unix.inet_addr
+    |V_ip_list of Unix.inet_addr list
     |V_int_list of int list
     |V_boolean of bool
     |V_variant of string
     |V_variant_list of string list
 	|V_empty_list
 
+(*
 let rec string_of_val_atom = 
     let string_of_list x = sprintf "[%s]" (String.concat ", " x) in
     function
     |V_string x -> sprintf "\"%s\"" x
+    |V_ip x -> sprintf "ip: %s" (Unix.string_of_inet_addr x)
+    |V_ip_list xl -> string_of_list
+        (List.map (fun x -> string_of_val_atom (V_ip x)) xl)
     |V_string_list xl -> string_of_list 
         (List.map (fun x -> string_of_val_atom (V_string x)) xl)
     |V_int x -> sprintf "%d" x
@@ -68,6 +78,24 @@ let rec string_of_val_atom =
     |V_boolean x -> sprintf "%B" x
     |V_variant v -> v
     |V_variant_list vs -> string_of_list vs
+	|V_empty_list -> "[]"
+*)
+
+let rec string_of_val_atom = 
+    let string_of_list fn xl =
+        sprintf "[%s]" (String.concat ", " 
+            (List.map (fun x -> string_of_val_atom (fn x)) xl)
+        ) in
+    function
+    |V_string x -> sprintf "\"%s\"" x
+    |V_ip x -> sprintf "ip: %s" (Unix.string_of_inet_addr x)
+    |V_ip_list xl -> string_of_list (fun x -> V_ip x) xl
+    |V_string_list xl -> string_of_list  (fun x -> V_string x) xl
+    |V_int x -> sprintf "%d" x
+    |V_int_list xl -> string_of_list (fun x -> V_int x) xl
+    |V_boolean x -> sprintf "%B" x
+    |V_variant v -> v
+    |V_variant_list xl -> string_of_list (fun x -> V_variant x) xl
 	|V_empty_list -> "[]"
 
 type var_types = var_type list
@@ -96,11 +124,14 @@ let valid_type x =
     |(T_int _),(V_int _) 
     |(T_int_list _),(V_int _)
     |T_boolean, (V_boolean _)
+    |T_ip, (V_string _)
+    |T_ip_list, (V_string_list _)
     |(T_variant _),(V_variant _)
     |(T_variant_list _),(V_variant_list _)
 	|(T_int_list _), V_empty_list
 	|T_string_list, V_empty_list
 	|(T_variant_list _), V_empty_list
+	|T_ip_list, V_empty_list
         -> true
     |_ -> false
 
@@ -127,9 +158,13 @@ let resolve_type (ty:var_types) v =
     |T_int (a,b), (V_int_list il) -> List.iter (check_int_range v.v_loc a b) il; v
     |T_variant t, (V_variant x) -> check_variants v.v_loc t [x]; v
     |T_variant t, (V_variant_list x) -> check_variants v.v_loc t x; v
+    |T_ip, (V_string x) -> {v with v_val=V_ip (Unix.inet_addr_of_string x)}
+    |T_ip_list, (V_string_list x) -> {v with v_val=V_ip_list
+        (List.map Unix.inet_addr_of_string x)}
 	|T_int_list _, V_empty_list -> {v with v_val=(V_int_list [])}
 	|T_string_list, V_empty_list -> {v with v_val=(V_string_list [])}
 	|T_variant_list _, V_empty_list -> {v with v_val=(V_variant_list [])}
+	|T_ip_list, V_empty_list -> {v with v_val=(V_ip_list [])}
 	|_,_ -> v
 
 (* Given a type specification, fill in the value types *)
