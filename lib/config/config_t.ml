@@ -49,6 +49,8 @@ type var_type = {
     t_atom: type_atom;
     t_descr: string option;
     t_default: val_atom option;
+    t_short: char option; (* short command line switch e.g. 'p' for -p 1234 *)
+    t_long: string option; (* long command line switch e.g. 'port' for --port 1234 *)
 }
 and val_atom =
     |V_string of string
@@ -124,7 +126,7 @@ let check_variants loc is vs =
 	List.iter (fun v -> if not (List.mem v is) then raise (Type_error (loc,
 		(sprintf "Unknown variant '%s', expected (%s)" v (String.concat "|" is))))) vs
 	
-let resolve_type (ty:var_types) v =
+let resolve_type (ty:var_types) (v:var_val) =
 	let id = v.v_name in
 	let conf_ty = try List.find (fun t -> t.t_name = id) ty with Not_found ->
 		raise (Type_error (v.v_loc, (sprintf "Unknown variable '%s'" id)))
