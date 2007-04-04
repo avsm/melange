@@ -67,6 +67,7 @@ let generate_ml (ty:var_types) =
               ind (ind (sprintf "|\"%s\" -> Some `%s" vname vname))
             ) vlist) @ [
               ind (ind "|_ -> None");
+              ind "let of_config config (key:string) = of_string (config#get_variant key)";
               "end"
             ]
         |_ -> []
