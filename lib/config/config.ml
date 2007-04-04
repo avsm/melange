@@ -57,7 +57,8 @@ let generate_ml (ty:var_types) =
         let bits = Str.split (Str.regexp_string ".") name in
         String.capitalize (String.concat "_" bits) in
     let ind y = "  " ^ y in
-    String.concat "\n" (List.flatten (List.map (fun t ->
+    String.concat "\n" (List.flatten (
+      List.map (fun t ->
         match t.t_atom with
         |T_variant vlist |T_variant_list vlist ->
             [ sprintf "module %s = struct" (ocaml_mod_of_t_name t.t_name);
@@ -71,7 +72,8 @@ let generate_ml (ty:var_types) =
               "end"
             ]
         |_ -> []
-    ) ty))
+      ) ty)
+    )
     
 class config (ty:var_types) (fname:string) =
     let internal_error key expty =
