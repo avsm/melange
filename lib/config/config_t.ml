@@ -62,25 +62,6 @@ and val_atom =
     |V_variant_list of string list
 	|V_empty_list
 
-(*
-let rec string_of_val_atom = 
-    let string_of_list x = sprintf "[%s]" (String.concat ", " x) in
-    function
-    |V_string x -> sprintf "\"%s\"" x
-    |V_ip x -> sprintf "ip: %s" (Unix.string_of_inet_addr x)
-    |V_ip_list xl -> string_of_list
-        (List.map (fun x -> string_of_val_atom (V_ip x)) xl)
-    |V_string_list xl -> string_of_list 
-        (List.map (fun x -> string_of_val_atom (V_string x)) xl)
-    |V_int x -> sprintf "%d" x
-    |V_int_list xl -> string_of_list
-        (List.map (fun x -> string_of_val_atom (V_int x)) xl)
-    |V_boolean x -> sprintf "%B" x
-    |V_variant v -> v
-    |V_variant_list vs -> string_of_list vs
-	|V_empty_list -> "[]"
-*)
-
 let rec string_of_val_atom = 
     let string_of_list fn xl =
         sprintf "[%s]" (String.concat ", " 
