@@ -47,7 +47,31 @@ let default_config (ty:var_types) =
         |None -> sprintf "%s = " t.t_name in
         [comment; base; ""]
     ) ty))
-
+    
+(**
+  * Generate an ML file with all the variant definitions 
+  *)
+let generate_ml (ty:var_types) =
+    (* convert x.y.z to X_y_z *)
+    let ocaml_mod_of_t_name name =
+        let bits = Str.split (Str.regexp_string ".") name in
+        String.capitalize (String.concat "_" bits) in
+    let ind y = "  " ^ y in
+    String.concat "\n" (List.flatten (List.map (fun t ->
+        match t.t_atom with
+        |T_variant vlist |T_variant_list vlist ->
+            [ sprintf "module %s = struct" (ocaml_mod_of_t_name t.t_name);
+              ind (sprintf "type t = [ %s ]" (String.concat " " (List.map (fun n -> "|`" ^ n) vlist)));
+              ind "let of_string (x:string) : t option = match x with"
+            ] @ (List.map (fun vname ->
+              ind (ind (sprintf "|\"%s\" -> Some `%s" vname vname))
+            ) vlist) @ [
+              ind (ind "|_ -> None");
+              "end"
+            ]
+        |_ -> []
+    ) ty))
+    
 class config (ty:var_types) (fname:string) =
     let internal_error key expty =
       raise (Error (key.v_loc.Config_location.line_num,
