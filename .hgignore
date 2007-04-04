@@ -1,4 +1,6 @@
 ^config.h$
+^config.status$
+^config.log$
 ^config.mk$
 \.cmi$
 \.cmo$
@@ -8,6 +10,7 @@
 \.a$
 \.o$
 /\._d/
+\.annot$
 /\._bcdi/
 /\._ncdi/
 ^lib/ssh/ssh_message\.ml$
@@ -23,4 +26,7 @@
 ^tools/spl/spl_lexer\.ml$
 ^tools/spl/spl_parser\.ml$
 ^tools/spl/splc$
-
+^apps/deens/deens$
+^apps/deens/deens.pid$
+^apps/deens/deens.conf$
+^apps/deens/gen_deens_ml$

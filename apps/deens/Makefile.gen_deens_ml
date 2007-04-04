@@ -1,0 +1,11 @@
+SOURCES = conf.ml gen_deens_ml.ml
+RESULT = gen_deens_ml
+
+LIBS=		unix str config
+CONFDIR=	../../lib/config
+LIBDIRS=	$(CONFDIR)
+INCDIRS=	$(CONFDIR)
+
+OCAMLMAKEFILE=../../OCamlMakefile
+include $(OCAMLMAKEFILE)
+

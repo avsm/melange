@@ -1,5 +1,4 @@
 BUILD_ROOT=../..
-
 all:: depend build
 
 include $(BUILD_ROOT)/mk/base.mk

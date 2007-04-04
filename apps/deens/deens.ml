@@ -20,6 +20,7 @@ open Unix
 open Printf
 open Dns
 open Dns_rr
+open Conf_autogen
 
 module M = Mpl_stdlib
 
@@ -107,30 +108,24 @@ let _ =
 (*    c.Gc.space_overhead <- 1000001; 	*)
 (*    Gc.set c;                         *)
 
-    let fname = ref (Some "default.zones") in
-    let memo = ref `None in
-    let port = ref 5353 in
-    let iface = ref None in 
     let parse = [
-        "-f", Arg.String (fun x -> fname := Some x),
-        "Filename for zones";
-        "-i", Arg.String (fun x -> iface := Some x),
-        "IP address to listen on";
-        "-p", Arg.Int (fun x -> port := x),
-        "Filename for zones";
-        "-m", Arg.Unit (fun () -> memo := `Memo),
-        "Memoize responses";
-        "-w", Arg.Unit (fun () -> memo := `Weak),
-        "Weakly memoize responses";
+        "-c", Arg.Unit (fun () -> Conf.default(); exit 0),
+        "Generate default configuration file";
     ] in
     let usagestr = "Usage: deens <options>" in    
     Arg.parse parse (fun _ -> ()) usagestr;
-    let interface = match !iface with
-    |None -> inet_addr_any
-    |Some ip -> try inet_addr_of_string ip with _ -> failwith "Invalid -i argument"
-    in
-    let fin = open_in (match !fname with |None -> failwith "Need -f"
-        |Some x -> x) in
+    (* Parse config file *)
+    let config = Conf.init () in
+    config#dump;
+    let interface = config#get_ip Conf.network_ip in
+    let fname = config#get_string Conf.zones_file in
+    let port = config#get_int Conf.network_port in
+    let fn = match Cache_mode.of_config config "cache.mode" with
+    |Some `None |None -> evalfn
+    |Some `Weak -> weak_memofn
+    |Some `Leaky -> memofn in
+    (* Read all the zone files *)
+    let fin = open_in fname in
     let num_zones = ref 0 in
     try while true do
         let fl = input_line fin in
@@ -139,14 +134,15 @@ let _ =
         incr num_zones;
     done with End_of_file -> ();
     prerr_endline (sprintf "Loaded %d zones" !num_zones);
-    let udp_descr = Unix.handle_unix_error (Ounix.udp_listener ~interface) !port in
+    (* Open port and init environment *)
+    let udp_descr = Unix.handle_unix_error (Ounix.udp_listener ~interface) port in
     let senv = M.new_env (String.make 4000 '\000') in
     let env = M.new_env (String.make 4000 '\000') in
+    (* Drop pid file *)
     let pid = Unix.getpid () in
     let pidf = open_out "deens.pid" in
     output_string pidf (sprintf "%d" pid);
     close_out pidf;
-    let fn = match !memo with |`None -> evalfn |`Weak -> weak_memofn |`Memo -> memofn in
     let recvfn buf off len = udp_descr#recvfrom buf off len [] in
     let replyfn = fn senv udp_descr in
 
