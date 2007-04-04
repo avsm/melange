@@ -69,7 +69,7 @@ let rec string_of_val_atom =
         ) in
     function
     |V_string x -> sprintf "\"%s\"" x
-    |V_ip x -> sprintf "ip: %s" (Unix.string_of_inet_addr x)
+    |V_ip x -> sprintf "%s" (Unix.string_of_inet_addr x)
     |V_ip_list xl -> string_of_list (fun x -> V_ip x) xl
     |V_string_list xl -> string_of_list  (fun x -> V_string x) xl
     |V_int x -> sprintf "%d" x
