@@ -7,35 +7,37 @@ type result =
 	|Pass
 	|Fail of int
 	
-let regress_files = [
+let regress_files =
+    let def = {t_short=None; t_long=None; t_name="";
+        t_atom=T_unknown; t_descr=None; t_default=None} in [
 	("strings.conf", Pass,
 	  [
-		{t_name="config1"; t_atom=T_string; t_descr=None; t_default=None};
-		{t_name="config2"; t_atom=T_string; t_descr=None; t_default=None};
-		{t_name="config3"; t_atom=T_string; t_descr=None; t_default=None};
-		{t_name="config4.blah"; t_atom=T_string; t_descr=None; t_default=None};
-		{t_name="config4.blah2"; t_atom=T_string; t_descr=None; t_default=None};
+		{def with t_name="config1"; t_atom=T_string; t_descr=None; t_default=None};
+		{def with t_name="config2"; t_atom=T_string; t_descr=None; t_default=None};
+		{def with t_name="config3"; t_atom=T_string; t_descr=None; t_default=None};
+		{def with t_name="config4.blah"; t_atom=T_string; t_descr=None; t_default=None};
+		{def with t_name="config4.blah2"; t_atom=T_string; t_descr=None; t_default=None};
   	  ]
     );
     ("variants.conf", Pass,
 	  [
-		{t_name="config1"; t_atom=(T_variant ["Foo";"Bar";"Alpha"]); t_descr=None; t_default=None};
-		{t_name="config2"; t_atom=(T_variant ["Bar";"Foo"]); t_descr=None; t_default=None};
-		{t_name="config3"; t_atom=(T_variant_list ["Foo";"Bar";"Alpha"]); t_descr=None; t_default=None};
-		{t_name="config4"; t_atom=(T_variant_list ["Foo";"Bar";"Alpha"]); t_descr=None; t_default=None};
+		{def with t_name="config1"; t_atom=(T_variant ["Foo";"Bar";"Alpha"]); t_descr=None; t_default=None};
+		{def with t_name="config2"; t_atom=(T_variant ["Bar";"Foo"]); t_descr=None; t_default=None};
+		{def with t_name="config3"; t_atom=(T_variant_list ["Foo";"Bar";"Alpha"]); t_descr=None; t_default=None};
+		{def with t_name="config4"; t_atom=(T_variant_list ["Foo";"Bar";"Alpha"]); t_descr=None; t_default=None};
 	  ]
 	);
     ("variants.conf", (Fail 3),
 	  [
-		{t_name="config1"; t_atom=(T_variant ["Bar";"Alpha"]); t_descr=None; t_default=None};
+		{def with t_name="config1"; t_atom=(T_variant ["Bar";"Alpha"]); t_descr=None; t_default=None};
 	  ]
 	);
     ("ip.conf", Pass,
 	  [
-		{t_name="config1"; t_atom=T_ip; t_descr=None; t_default=None};
-		{t_name="config2"; t_atom=T_ip; t_descr=None; t_default=None};
-		{t_name="config3"; t_atom=T_ip_list; t_descr=None; t_default=None};
-		{t_name="config4"; t_atom=T_ip_list; t_descr=None; t_default=None};
+		{def with t_name="config1"; t_atom=T_ip; t_descr=None; t_default=None};
+		{def with t_name="config2"; t_atom=T_ip; t_descr=None; t_default=None};
+		{def with t_name="config3"; t_atom=T_ip_list; t_descr=None; t_default=None};
+		{def with t_name="config4"; t_atom=T_ip_list; t_descr=None; t_default=None};
  	  ]
 	);
  
