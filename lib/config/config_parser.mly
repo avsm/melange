@@ -45,10 +45,10 @@ config_lines:
 ;
 config_line:
 | IDENTIFIER EQUALS config_value SEMICOLON {
-    {Config_t.v_name=(id $1); v_ty=Config_t.T_unknown; v_val=$3; v_loc=(loc $1)}
+    {Config_t.v_name=(id $1); v_ty=Config_t.null_var_type; v_val=$3; v_loc=(loc $1)}
   }
 | IDENTIFIER EQUALS LBRACKET config_list_values RBRACKET SEMICOLON {
-	{Config_t.v_name=(id $1); v_ty=Config_t.T_unknown; v_val=$4; v_loc=(loc $1)}
+	{Config_t.v_name=(id $1); v_ty=Config_t.null_var_type; v_val=$4; v_loc=(loc $1)}
   }
 ;
 config_value:

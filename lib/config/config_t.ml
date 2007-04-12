@@ -20,6 +20,7 @@ open Printf
 exception Type_error of (Config_location.t * string)
 exception Internal_error of string
 
+(** Type of the configuration field contents *)
 type type_atom =
     |T_string
     |T_string_list
@@ -31,7 +32,48 @@ type type_atom =
     |T_variant of string list
     |T_variant_list of string list
     |T_unknown
-	
+
+(** Variant type to hold the actual contents of a configuration field *)
+type val_atom =
+    |V_string of string
+    |V_string_list of string list
+    |V_int of int
+    |V_ip of Unix.inet_addr
+    |V_ip_list of Unix.inet_addr list
+    |V_int_list of int list
+    |V_boolean of bool
+    |V_variant of string
+    |V_variant_list of string list
+	|V_empty_list
+
+(** Record describing a configuration field *)
+type var_type = {
+    t_name: string;
+    t_atom: type_atom;
+    t_descr: string option;
+    t_default: val_atom option;
+    t_short: char option; (** short command line switch e.g. 'p' for -p 1234 *)
+    t_long: string option; (** long command line switch e.g. 'port' for --port 1234 *)
+}
+
+type var_types = var_type list
+
+type var_val = {
+    v_name: string;
+    v_ty: var_type;
+    v_val: val_atom;
+	v_loc: Config_location.t;
+}
+
+type var_vals = var_val list
+
+(** Dummy var type, replaced after type checking by something sensible *)
+let null_var_type = {
+    t_name="(null)"; t_atom=T_unknown; t_descr=None; t_default=None;
+    t_short=None; t_long=None
+}
+
+(** Convert a type_atom to a human-readable string *)
 let string_of_type_atom = function
     |T_string -> "string"
     |T_string_list -> "string list"
@@ -44,26 +86,7 @@ let string_of_type_atom = function
     |T_variant_list vs -> sprintf "variant list (%s)" (String.concat "|" vs)
     |T_unknown -> raise (Internal_error "T_unknown found in config definition")
 
-type var_type = {
-    t_name: string;
-    t_atom: type_atom;
-    t_descr: string option;
-    t_default: val_atom option;
-    t_short: char option; (* short command line switch e.g. 'p' for -p 1234 *)
-    t_long: string option; (* long command line switch e.g. 'port' for --port 1234 *)
-}
-and val_atom =
-    |V_string of string
-    |V_string_list of string list
-    |V_int of int
-    |V_ip of Unix.inet_addr
-    |V_ip_list of Unix.inet_addr list
-    |V_int_list of int list
-    |V_boolean of bool
-    |V_variant of string
-    |V_variant_list of string list
-	|V_empty_list
-
+(** Convert a var_val to a human-readable string *)
 let rec string_of_val_atom = 
     let string_of_list fn xl =
         sprintf "[%s]" (String.concat ", " 
@@ -81,27 +104,27 @@ let rec string_of_val_atom =
     |V_variant_list xl -> string_of_list (fun x -> V_variant x) xl
 	|V_empty_list -> "[]"
 
-type var_types = var_type list
+(** Convert a var_type to a human-readable string *)
+let string_of_var_type vty =
+    let string_of_opt fn = function |None -> "(none)" |Some x -> fn x in
+    sprintf "[name=%s; type=%s; descr=%s; default=%s; short=%s; long=%s]"
+      vty.t_name (string_of_type_atom vty.t_atom) (string_of_opt (fun x -> x) vty.t_descr)
+      (string_of_opt string_of_val_atom vty.t_default)
+      (string_of_opt (fun x -> sprintf "%c" x) vty.t_short)
+      (string_of_opt (fun x -> x) vty.t_long)
 
-type var_val = {
-    v_name: string;
-    v_ty: type_atom;
-    v_val: val_atom;
-	v_loc: Config_location.t;
-}
-
+(** Convert a var_val to a human-readable string *)
 let string_of_var_val x =
-    sprintf "name=%s ty=%s val=%s" x.v_name (string_of_type_atom x.v_ty)
+    sprintf "name=%s ty=%s val=%s" x.v_name (string_of_var_type x.v_ty)
         (string_of_val_atom x.v_val)
 
-type var_vals = var_val list
-
+(** Convert a list of var_val to a human-readable string *)
 let string_of_var_vals xs =
     String.concat "\n" (List.map string_of_var_val xs)
 
 (* sanity check a var_val to make sure type and value are consistent *)
 let valid_type x =
-    match x.v_ty, x.v_val with
+    match x.v_ty.t_atom, x.v_val with
     |T_string,(V_string _)
     |T_string_list,(V_string_list _)
     |(T_int _),(V_int _) 
@@ -131,12 +154,13 @@ let resolve_type (ty:var_types) (v:var_val) =
 	let conf_ty = try List.find (fun t -> t.t_name = id) ty with Not_found ->
 		raise (Type_error (v.v_loc, (sprintf "Unknown variable '%s'" id)))
 	in
-	let v = {v with v_ty=conf_ty.t_atom} in
+	let v = {v with v_ty=conf_ty} in
+	let t_atom = v.v_ty.t_atom in
 	(* is the type the type we actually want? *)
 	if not (valid_type v) then 
 	    raise (Type_error (v.v_loc, (sprintf "%s: Expected %s, found %s"
-	        id (string_of_type_atom v.v_ty)(string_of_val_atom v.v_val))));
-	match v.v_ty,v.v_val with
+	        id (string_of_type_atom t_atom)(string_of_val_atom v.v_val))));
+	match t_atom,v.v_val with
     |T_int (a,b), (V_int i) -> check_int_range v.v_loc a b i; v
     |T_int (a,b), (V_int_list il) -> List.iter (check_int_range v.v_loc a b) il; v
     |T_variant t, (V_variant x) -> check_variants v.v_loc t [x]; v
@@ -150,6 +174,18 @@ let resolve_type (ty:var_types) (v:var_val) =
 	|T_ip_list, V_empty_list -> {v with v_val=(V_ip_list [])}
 	|_,_ -> v
 
-(* Given a type specification, fill in the value types *)
+(** Parse a getopt command line string to a var_atom *) 
+let string_to_var_type atom_ty v =
+    match atom_ty with
+    |T_string -> V_string v
+    |T_int (a,b) -> (* XXX check range *) V_int (int_of_string v)
+    |T_ip -> V_ip (Unix.inet_addr_of_string v)
+    |_ -> failwith "getopt_to_var_type: not finished yet"
+
+(** Turn a var_val into a getopt entry *)
+let getopt_of_var_val v =
+    ()
+    
+(** Given a type specification, fill in the value types *)
 let rec type_check ty (vals:var_vals)=
 	List.map (resolve_type ty) vals

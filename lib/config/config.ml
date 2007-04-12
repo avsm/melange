@@ -35,9 +35,7 @@ let do_parse ty fname =
         raise (Error (l.Config_location.line_num,(sprintf "Type error%s %s"
         	(Config_location.string_of_location l) str)))
 
-(**
-  * Create a string of a default configuration file
-  *)
+(** Create a string of a default configuration file *)
 let default_config (ty:var_types) =
     String.concat "\n" (List.flatten (List.map (fun t ->
         let comment = sprintf "# %s [%s]" (match t.t_descr with |None -> "" |Some x -> x)
@@ -48,9 +46,7 @@ let default_config (ty:var_types) =
         [comment; base; ""]
     ) ty))
     
-(**
-  * Generate an ML file with all the variant definitions 
-  *)
+(** Generate an ML file with all the variant definitions *)
 let generate_ml (ty:var_types) =
     (* convert x.y.z to X_y_z *)
     let ocaml_mod_of_t_name name =
@@ -74,7 +70,7 @@ let generate_ml (ty:var_types) =
         |_ -> []
       ) ty)
     )
-    
+
 class config (ty:var_types) (fname:string) =
     let internal_error key expty =
       raise (Error (key.v_loc.Config_location.line_num,
@@ -84,6 +80,8 @@ class config (ty:var_types) (fname:string) =
 		val v = checked_vals
 		method v = v
 		method dump = print_endline (string_of_var_vals v)
+		method getopt =
+		    List.map Config_t.getopt_of_var_val v
 		method get_val name =
 		    try List.find (fun s -> s.v_name = name) v
             with Not_found -> raise (Error (0, (sprintf "Unknown config key %s" name)))
