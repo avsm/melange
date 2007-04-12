@@ -72,7 +72,7 @@ let null_var_type = {
     t_name="(null)"; t_atom=T_unknown; t_descr=None; t_default=None;
     t_short=None; t_long=None
 }
-
+    
 (** Convert a type_atom to a human-readable string *)
 let string_of_type_atom = function
     |T_string -> "string"
@@ -175,17 +175,32 @@ let resolve_type (ty:var_types) (v:var_val) =
 	|_,_ -> v
 
 (** Parse a getopt command line string to a var_atom *) 
-let string_to_var_type atom_ty v =
-    match atom_ty with
-    |T_string -> V_string v
-    |T_int (a,b) -> (* XXX check range *) V_int (int_of_string v)
-    |T_ip -> V_ip (Unix.inet_addr_of_string v)
+let cmd_string_to_val_atom str vty =
+    let loc = Config_location.cmd_location vty.t_name in
+    match vty.t_atom with 
+    |T_string -> V_string str
+    |T_int (a,b) -> begin
+        let i = try int_of_string str with _ ->
+            raise (Type_error (loc, sprintf "Not a valid int: %s" str)) in
+        check_int_range loc a b i;
+        V_int i
+    end
+    |T_ip -> begin
+        let ip = try Unix.inet_addr_of_string str with _ ->
+            raise (Type_error (loc, sprintf "Not a valid IP: %s" str)) in
+        V_ip ip
+    end
     |_ -> failwith "getopt_to_var_type: not finished yet"
 
 (** Turn a var_val into a getopt entry *)
-let getopt_of_var_val v =
-    ()
+let getopt_of_var_ty vref vty =
+    let shortval = match vty.t_short with |None -> Getopt.noshort |Some c -> c in
+    let longval = match vty.t_long with |None -> Getopt.nolong |Some s -> s in
+    let action = None in (* No default actions yet *)
+    let handler = Some (fun str ->
+        vref := Some (cmd_string_to_val_atom str vty)) in
+    (shortval, longval, action, handler)
     
 (** Given a type specification, fill in the value types *)
-let rec type_check ty (vals:var_vals)=
+let rec type_check ty (vals:var_vals) =
 	List.map (resolve_type ty) vals

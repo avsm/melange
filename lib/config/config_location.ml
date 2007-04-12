@@ -33,7 +33,7 @@ let file_name = ref None
 
 let initial_location = { file_name=None; line_num=0; column_num=0 }
 let current_location = ref initial_location
-let cmd_location = { file_name=None; line_num= -1; column_num= -1 }
+let cmd_location c = { file_name=Some c; line_num= -1; column_num= -1 }
 
 let start_parse f =
     start := 1;
@@ -56,4 +56,5 @@ let string_of_location l =
     if l.line_num >= 0 then
         sprintf " at line %d%s:" l.line_num c
     else
-        "command-line: "
+        sprintf " in command line%s: "
+            (match l.file_name with |None ->"" |Some x -> sprintf " (%s)" x)

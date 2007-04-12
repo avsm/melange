@@ -20,21 +20,10 @@ open Config_t
 
 exception Error of (int * string)
 
-let do_parse ty fname =
-	let fin = open_in fname in
-	let lexbuf = Lexing.from_channel fin in
-	try
-		Config_location.start_parse fname;
-		let raw_vals = Config_parser.main Config_lexer.token lexbuf in
-		type_check ty raw_vals
-    with
-	|Config_location.Syntax_error l ->
-        raise (Error (l.Config_location.line_num,(sprintf "Syntax error%s near token '%s'"
-        	(Config_location.string_of_location l) (Lexing.lexeme lexbuf))))
-	|Config_t.Type_error (l,str) ->
-        raise (Error (l.Config_location.line_num,(sprintf "Type error%s %s"
-        	(Config_location.string_of_location l) str)))
-
+let error_of_type_error l str =
+    raise (Error (l.Config_location.line_num,(sprintf "Type error%s %s"
+    	(Config_location.string_of_location l) str)))
+    
 (** Create a string of a default configuration file *)
 let default_config (ty:var_types) =
     String.concat "\n" (List.flatten (List.map (fun t ->
@@ -71,17 +60,56 @@ let generate_ml (ty:var_types) =
       ) ty)
     )
 
+(** Parse a configuration file and return a var_val list *)
+let parse_config vtys fname =
+	let fin = open_in fname in
+	let lexbuf = Lexing.from_channel fin in
+	try
+		Config_location.start_parse fname;
+		let raw_vals = Config_parser.main Config_lexer.token lexbuf in
+		type_check vtys raw_vals
+    with
+	|Config_location.Syntax_error l ->
+        raise (Error (l.Config_location.line_num,(sprintf "Syntax error%s near token '%s'"
+        	(Config_location.string_of_location l) (Lexing.lexeme lexbuf))))
+	|Type_error (l,str) -> error_of_type_error l str
+        
+
+(** Parse command line arguments into a list of var_vals *)
+let parse_cmdline vtys =
+    try 
+        let defaults = List.map (fun vty -> ref None) vtys in
+        let opts = List.fold_left2 (fun acc defref vty ->
+        getopt_of_var_ty defref vty :: acc) [] defaults vtys in
+        (* XXX add --help opt here *)
+        (* XXX catch getopt errors *)
+        Getopt.parse_cmdline opts (fun x -> ());
+        List.fold_left2 (fun acc vval vty ->
+            match !vval with
+            |Some v ->  {v_name=vty.t_name; v_ty=vty; v_val=v;
+                v_loc=Config_location.cmd_location vty.t_name} :: acc
+            |None -> acc 
+        ) [] defaults vtys
+    with
+        |Type_error (l,str) -> error_of_type_error l str
+
+(** Given a list of filenames, parse them in order, then parse command line
+  and return complete list of variable values *)
+let parse_config_and_cmdline flist vtys =
+    let varvals = List.map (parse_config vtys) flist in
+    let cmdvals = parse_cmdline vtys in
+    let allvals = varvals @ [cmdvals] in
+    allvals
+    
 class config (ty:var_types) (fname:string) =
     let internal_error key expty =
       raise (Error (key.v_loc.Config_location.line_num,
         (sprintf "Internal error: expected type %s, found: %s" expty (string_of_var_val key)))) in
-	let checked_vals = do_parse ty fname in
+	let checked_vals = parse_config ty fname in
 	object(self)
 		val v = checked_vals
 		method v = v
 		method dump = print_endline (string_of_var_vals v)
-		method getopt =
-		    List.map Config_t.getopt_of_var_val v
 		method get_val name =
 		    try List.find (fun s -> s.v_name = name) v
             with Not_found -> raise (Error (0, (sprintf "Unknown config key %s" name)))
