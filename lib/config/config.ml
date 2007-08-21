@@ -75,13 +75,35 @@ let parse_config vtys fname =
 	|Type_error (l,str) -> error_of_type_error l str
         
 
+(** Generate help string of a list of var_vals *)
+let helpopt_of_var_tys vtys =
+    let help_of_vty vty =
+        let opt_string = match vty.t_short,vty.t_long with
+        |None,None -> failwith "Invalid config string"
+        |Some c, None -> sprintf "-%c" c
+        |Some c, Some s -> sprintf "--%s (-%c)" s c
+        |None, Some s -> sprintf "--%s" s in
+        let opt_descr = match vty.t_descr with
+        |None -> ""
+        |Some d -> sprintf "%s. " d in
+        let opt_default = match vty.t_default with
+        |None -> ""
+        |Some d -> sprintf " (default: %s)" (string_of_val_atom d) in
+        sprintf "%-20s %sType %s%s" opt_string opt_descr (string_of_type_atom vty.t_atom) opt_default
+    in
+    let help_msg () =
+        print_endline "Usage:";
+        print_endline (String.concat "\n" (List.map help_of_vty vtys));
+        exit 1 in
+    ('h', "help", Some help_msg, None)
+    
 (** Parse command line arguments into a list of var_vals *)
 let parse_cmdline vtys =
     try 
         let defaults = List.map (fun vty -> ref None) vtys in
         let opts = List.fold_left2 (fun acc defref vty ->
-        getopt_of_var_ty defref vty :: acc) [] defaults vtys in
-        (* XXX add --help opt here *)
+          getopt_of_var_ty defref vty :: acc) [] defaults vtys in
+        let opts = helpopt_of_var_tys vtys :: opts in
         (* XXX catch getopt errors *)
         Getopt.parse_cmdline opts (fun x -> ());
         List.fold_left2 (fun acc vval vty ->
