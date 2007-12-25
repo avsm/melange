@@ -1,8 +1,8 @@
 SOURCES = conf.ml gen_deens_ml.ml
 RESULT = gen_deens_ml
 
-LIBS=		unix str config
-CONFDIR=	../../lib/config
+LIBS=		unix str getopt config
+CONFDIR=	../../lib/config ../../dist/getopt
 LIBDIRS=	$(CONFDIR)
 INCDIRS=	$(CONFDIR)
 

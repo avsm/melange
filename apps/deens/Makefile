@@ -2,8 +2,9 @@ SOURCES = conf.ml conf_autogen.ml deens.ml
 RESULT = deens
 
 USE_MPL=	Yes
-LIBS=		unix str mpl_stdlib config
+LIBS=		unix str mpl_stdlib getopt config
 MELANGE_LIBS=	dns ounix config
+DISTS=		getopt
 
 include ../../mk/prog.mk
 

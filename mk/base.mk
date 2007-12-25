@@ -39,8 +39,8 @@ endif
 
 depend:: $(tool_dep)
 
-extra_mel_libs= $(patsubst %,$(BUILD_ROOT)/lib/%,$(MELANGE_LIBS))
 extra_mel_libs+=$(patsubst %,$(BUILD_ROOT)/dist/%,$(DISTS))
+extra_mel_libs+= $(patsubst %,$(BUILD_ROOT)/lib/%,$(MELANGE_LIBS))
 LIBS+= $(MELANGE_LIBS)
 LIBDIRS+= $(extra_mel_libs)
 INCDIRS+= $(extra_mel_libs)
