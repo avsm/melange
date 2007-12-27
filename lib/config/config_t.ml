@@ -193,14 +193,15 @@ let cmd_string_to_val_atom str vty =
     |_ -> failwith "getopt_to_var_type: not finished yet"
 
 (** Turn a var_val into a getopt entry *)
-let getopt_of_var_ty vref vty =
+let getopt_of_var_ty add_config_fn vty =
     let shortval = match vty.t_short with |None -> Getopt.noshort |Some c -> c in
     let longval = match vty.t_long with |None -> Getopt.nolong |Some s -> s in
     let action = None in (* No default actions yet *)
-    let handler = Some (fun str ->
-        vref := Some (cmd_string_to_val_atom str vty)) in
+	let handler = Some (fun str ->
+		add_config_fn vty (cmd_string_to_val_atom str vty)
+	) in
     (shortval, longval, action, handler)
-    
+   
 (** Given a type specification, fill in the value types *)
 let rec type_check ty (vals:var_vals) =
 	List.map (resolve_type ty) vals
