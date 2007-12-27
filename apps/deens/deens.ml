@@ -107,13 +107,6 @@ let _ =
 (*    c.Gc.max_overhead <- 1000001;	*)
 (*    c.Gc.space_overhead <- 1000001; 	*)
 (*    Gc.set c;                         *)
-
-    let parse = [
-        "-c", Arg.Unit (fun () -> Conf.default(); exit 0),
-        "Generate default configuration file";
-    ] in
-    let usagestr = "Usage: deens <options>" in    
-    Arg.parse parse (fun _ -> ()) usagestr;
     (* Parse config file *)
     let config = Conf.init () in
     config#dump;
