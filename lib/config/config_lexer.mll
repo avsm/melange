@@ -22,6 +22,7 @@ exception Eof
 }
 
 let number = ['0'-'9']+
+let ipv4 = ['0'-'9']+'.'['0'-'9']+'.'['0'-'9']+'.'['0'-'9']+
 let variant = ['A'-'Z']['_''a'-'z''A'-'Z''0'-'9']*
 let identifier = ['a'-'z']['_''.''a'-'z''A'-'Z''0'-'9']*
 
@@ -38,6 +39,7 @@ rule token = parse
 | identifier { IDENTIFIER(Lexing.lexeme lexbuf, next_token lexbuf) }
 | variant { VARIANT(Lexing.lexeme lexbuf, next_token lexbuf) }
 | number { INT(int_of_string (Lexing.lexeme lexbuf), next_token lexbuf) }
+| ipv4 { STRING(Lexing.lexeme lexbuf, next_token lexbuf) }
 | "/*" { comment lexbuf; token lexbuf }
 | "//" { single_comment lexbuf; token lexbuf }
 | "#" { single_comment lexbuf; token lexbuf }
@@ -56,5 +58,4 @@ and single_comment = parse
 
 and string_e s = parse
 | '\"' { STRING(Buffer.contents s, next_token lexbuf) }
-(* XXX add support for string escapes here *)
 | _ as x { Buffer.add_char s x; string_e s lexbuf }
