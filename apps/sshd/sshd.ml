@@ -55,11 +55,9 @@ class mlsshd_config conf =
         let primes = Hashtbl.create 1 in
         try
             Ssh_openssh_formats.moduli moduli_file primes;
-            DEBUG("Successfully initialised moduli");
             primes;
         with Ssh_openssh_formats.Parse_failure ->
             (* Clear primes to be safe *)
-            DEBUG("moduli parsing error");
             Hashtbl.clear primes;
             let g1p,g1g = Ssh_kex.Methods.public_parameters Ssh_kex.Methods.DiffieHellmanGroup1SHA1 in
             let g14p,g14g = Ssh_kex.Methods.public_parameters Ssh_kex.Methods.DiffieHellmanGroup14SHA1 in
