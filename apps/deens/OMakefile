@@ -1,0 +1,36 @@
+.PHONY: clean
+
+OCAMLINCLUDES[] +=
+    $(MPL_DIR)
+    $(DIST_DIR)/getopt
+    $(LIB_DIR)/config
+    $(LIB_DIR)/dns
+    $(LIB_DIR)/ounix
+
+OCAML_LIBS[] += 
+    $(DIST_DIR)/getopt/getopt
+    $(MPL_DIR)/mpl_stdlib
+    $(LIB_DIR)/config/config
+    $(LIB_DIR)/dns/dns
+    $(LIB_DIR)/ounix/ounix
+
+OCAML_CLIBS[] +=
+    $(LIB_DIR)/ounix/ounix_stubs
+
+OCAML_OTHER_LIBS[] +=
+    unix
+    str
+
+CONF_PROGRAM = $(OCamlProgram gen_deens_ml, conf gen_deens_ml)
+
+GEN_FILES[] = conf_autogen.ml
+OCamlGeneratedFiles($(GEN_FILES))
+conf_autogen.ml: $(CONF_PROGRAM)
+	$< > $@
+
+OCAML_LIB_FLAGS += -cclib -lounix_stubs
+
+.DEFAULT: $(OCamlProgram deens, conf conf_autogen deens)
+
+clean:
+	$(CLEAN) $(GEN_FILES) gen_deens_ml gen_deens_ml.opt deens deens.opt deens.run gen_deens_ml.run

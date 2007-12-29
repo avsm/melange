@@ -1,0 +1,35 @@
+.PHONY: clean
+
+OCAMLINCLUDES += $(MPL_DIR)
+
+GEN_FILES[] =
+   dnsparser.ml
+   dnsparser.mli
+   dnslexer.ml
+
+OCamlGeneratedFiles($(GEN_FILES))
+
+MPL_FILES[] =
+   dns
+   dns_rr
+MPLGenerated($(MPL_FILES))
+
+FILES[] =
+   dns_rr
+   dns
+   hashcons
+   dnsparameters
+   dnsrr
+   dnstrie
+   dnsloader
+   dnsquery
+   dnsparser
+   dnslexer
+   dnsserver
+
+PROGRAM = dns
+
+.DEFAULT: $(OCamlLibrary $(PROGRAM),$(FILES))
+
+clean:
+	$(CLEAN) $(PROGRAM) $(GEN_FILES)

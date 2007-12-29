@@ -1,0 +1,11 @@
+.PHONY: clean
+
+OCAMLINCLUDES += $(MPL_DIR)
+
+MPL_FILES[] = ethernet
+MPLGenerated($(MPL_FILES))
+
+.DEFAULT: $(OCamlLibrary ethernet, ethernet)
+
+clean:
+	$(CLEAN) $(addsuffix .ml, $(MPL_FILES)) ethernet

@@ -1,0 +1,31 @@
+.PHONY: clean
+
+GEN_FILES[] =
+   mpl_parser.ml
+   mpl_parser.mli
+   mpl_lexer.ml
+
+OCamlGeneratedFiles($(GEN_FILES))
+
+FILES[] =
+   mpl_utils
+   mpl_types
+   mpl_location
+   mpl_bits
+   mpl_syntaxtree
+   mpl_typechk
+   mpl_parser
+   mpl_lexer
+   mpl_cfg
+   mpl_ocaml
+   mplc
+
+PROGRAM = mplc
+
+STDLIB = mpl_stdlib
+STDLIB_FILES[] = mpl_stdlib
+
+.DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES)) $(OCamlLibrary $(STDLIB), $(STDLIB_FILES))
+
+clean:
+	$(CLEAN) $(PROGRAM) $(PROGRAM).opt $(PROGRAM).run $(GEN_FILES) $(STDLIB)

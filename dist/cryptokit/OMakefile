@@ -1,0 +1,26 @@
+ZLIB_LIBDIR=/usr/lib
+ZLIB_LIB=-lz
+CAMLLIB=$(shell ocamlc -where)
+CFLAGS += -O -DHAVE_ZLIB
+OCAML_CLIBS += z
+INCLUDES += $(CAMLLIB) .
+OCAMLFLAGS += -w y
+MKLIB=ocamlmklib
+
+CRYPTOKIT_C = rijndael-alg-fst stubs-aes d3des stubs-des arcfour stubs-arcfour sha1 stubs-sha1 sha256 stubs-sha256 ripemd160 stubs-ripemd160 stubs-md5 stubs-zlib stubs-misc stubs-rng
+
+C_OBJS = $(addsuffix .o, $(CRYPTOKIT_C))
+
+cryptokit.cma: cryptokit.cmo $(C_OBJS)
+        $(MKLIB) -o cryptokit $(C_OBJS) -L$(ZLIB_LIBDIR) $(ZLIB_LIB)
+        $(MKLIB) -o cryptokit $< -L$(ZLIB_LIBDIR) $(ZLIB_LIB)
+
+cryptokit.a cryptokit.cmxa: cryptokit.cmx $(C_OBJS)
+        $(MKLIB) -o cryptokit $(C_OBJS) -L$(ZLIB_LIBDIR) $(ZLIB_LIB)
+        $(MKLIB) -o cryptokit $< -L$(ZLIB_LIBDIR) $(ZLIB_LIB)
+
+speedtest: libcryptokit.a cryptokit.cmxa speedtest.ml
+        $(OCAMLOPT) -o speedtest -ccopt -L. unix.cmxa nums.cmxa cryptokit.cmxa speedtest.ml
+
+clean:
+	$(CLEAN) dllcryptokit.so

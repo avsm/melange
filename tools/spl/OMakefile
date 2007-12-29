@@ -1,0 +1,31 @@
+.PHONY: clean
+
+GEN_FILES[] =
+   spl_parser.ml
+   spl_parser.mli
+   spl_lexer.ml
+
+OCamlGeneratedFiles($(GEN_FILES))
+
+FILES[] =
+   spl_utils
+   spl_location
+   spl_syntaxtree
+   spl_lexer
+   spl_parser
+   spl_typechecker
+   spl_cfg
+   spl_optimiser
+   spl_dot
+   spl_promela
+   spl_ocaml
+   spl_debug
+   spl_gui
+   splc
+
+PROGRAM = splc
+
+.DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES)) $(OCamlLibrary spl_stdlib, spl_stdlib)
+
+clean:
+	$(CLEAN) $(PROGRAM) $(PROGRAM).opt $(PROGRAM).run $(GEN_FILES)

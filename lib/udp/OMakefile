@@ -1,0 +1,14 @@
+.PHONY: clean
+
+OCAMLINCLUDES += $(MPL_DIR)
+
+MPL_FILES[] = udp
+MPLGenerated($(MPL_FILES))
+
+FILES[] = udp
+PROGRAM = udp
+
+.DEFAULT: $(OCamlLibrary $(PROGRAM),$(FILES))
+
+clean:
+	$(CLEAN) $(PROGRAM)

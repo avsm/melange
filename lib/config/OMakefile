@@ -1,0 +1,26 @@
+.PHONY: clean
+
+CONFIG_DIR = $(ROOT)/lib/config
+
+GEN_FILES[] =
+   config_parser.ml
+   config_parser.mli
+   config_lexer.ml
+
+OCamlGeneratedFiles($(GEN_FILES))
+
+FILES[] =
+   config_location
+   config_t
+   config_lexer
+   config_parser
+   config
+
+OCAMLINCLUDES += $(ROOT)/dist/getopt
+
+PROGRAM = config
+
+.DEFAULT: $(OCamlLibrary $(PROGRAM), $(FILES))
+
+clean:
+	$(CLEAN) $(GEN_FILES)

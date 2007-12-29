@@ -1,0 +1,27 @@
+.PHONY: clean
+
+OCAMLINCLUDES[] +=
+    $(MPL_DIR)
+    $(LIB_DIR)/dns
+    $(LIB_DIR)/udp
+    $(LIB_DIR)/ounix
+
+OCAML_LIBS[] += 
+    $(MPL_DIR)/mpl_stdlib
+    $(LIB_DIR)/dns/dns
+    $(LIB_DIR)/udp/udp
+    $(LIB_DIR)/ounix/ounix
+
+OCAML_CLIBS[] +=
+    $(LIB_DIR)/ounix/ounix_stubs
+
+OCAML_OTHER_LIBS[] +=
+    unix
+    str
+
+OCAML_LIB_FLAGS += -cclib -lounix_stubs
+
+.DEFAULT: $(OCamlProgram mldig, utils resolvconf dig)
+
+clean:
+	$(CLEAN) mldig mldig.opt mldig.run

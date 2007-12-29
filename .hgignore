@@ -2,6 +2,8 @@
 ^config.status$
 ^config.log$
 ^config.mk$
+\.omc$
+^\.omakedb
 \.cmi$
 \.cmo$
 \.cma$

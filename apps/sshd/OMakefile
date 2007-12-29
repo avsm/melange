@@ -1,0 +1,36 @@
+.PHONY: clean
+
+OCAMLINCLUDES[] +=
+    $(MPL_DIR)
+    $(DIST_DIR)/getopt
+    $(LIB_DIR)/config
+    $(LIB_DIR)/ssh
+    $(LIB_DIR)/ounix
+    $(DIST_DIR)/cryptokit
+
+OCAML_LIBS[] += 
+    $(DIST_DIR)/cryptokit/cryptokit
+    $(DIST_DIR)/getopt/getopt
+    $(MPL_DIR)/mpl_stdlib
+    $(SPL_DIR)/spl_stdlib
+    $(LIB_DIR)/config/config
+    $(LIB_DIR)/ounix/ounix
+    $(LIB_DIR)/ssh/ssh
+
+OCAML_CLIBS[] +=
+    $(LIB_DIR)/ounix/ounix_stubs
+    $(LIB_DIR)/ssh/libssh_pty_stubs
+
+OCAML_OTHER_LIBS[] +=
+    unix
+    nums
+    str
+
+CONF_PROGRAM = $(OCamlProgram sshd, server ssh_openssh_formats sshd)
+
+OCAML_LIB_FLAGS += -cclib -lounix_stubs -cclib -llibssh_pty_stubs -cclib -lcryptokit -cclib -ldllcryptolib.so
+
+.DEFAULT: $(CONF_PROGRAM)
+
+clean:
+	$(CLEAN) sshd.run sshd.opt sshd

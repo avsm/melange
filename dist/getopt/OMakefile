@@ -1,0 +1,9 @@
+.PHONY: clean
+
+FILES[] = getopt
+PROGRAM = getopt
+
+.DEFAULT: $(OCamlLibrary $(PROGRAM), $(FILES))
+
+clean:
+	$(CLEAN)

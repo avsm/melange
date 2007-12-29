@@ -1,0 +1,77 @@
+# Compilation detection for pty code (util.h needed on OpenBSD)
+#
+static. =
+	CAMLLIB = $(shell $(OCAMLC) -where)
+	PTY_H_AVAILABLE = $(VerboseCheckCHeader pty.h)
+	UTIL_H_AVAILABLE = $(VerboseCheckCHeader util.h)
+	PTY_CFLAGS[] = $(if $(PTY_H_AVAILABLE), -DHAVE_PTY_H. $(EMPTY_ARRAY))
+	PTY_CFLAGS[] += $(if $(UTIL_H_AVAILABLE), -DHAVE_UTIL_H, $(EMPTY_ARRAY))
+	export
+
+section
+	CFLAGS += $(PTY_CFLAGS)
+	INCLUDES += $(CAMLLIB)
+	ssh_pty_stubs.o:
+
+PTY_STUB = $(StaticCLibrary libssh_pty_stubs, ssh_pty_stubs)
+
+# MPL generation
+#
+GEN_FILES[] =
+    ssh_server_automaton.ml
+    ssh_server_channel.ml
+    ssh_statecalls.ml
+
+OCamlGeneratedFiles($(GEN_FILES))
+
+OCAMLINCLUDES += $(SPL_DIR)
+OCAMLINCLUDES += $(MPL_DIR)
+OCAMLINCLUDES += $(LIB_DIR)/ounix
+OCAMLINCLUDES += $(DIST_DIR)/cryptokit
+
+MPL_FILES = ssh_message
+MPL_FLAGS = -s
+MPLGenerated($(MPL_FILES))
+
+# SPL generation
+#
+SPLC=$(ROOT)/tools/spl/splc
+SPL_FILES = ssh_server_automaton ssh_server_channel
+
+$(addsuffix .ml, $(SPL_FILES)) ssh_statecalls.ml: $(SPLC)
+	$(SPLC) -t ocaml -s ssh_statecalls -hdir $(SPL_DIR) -d false $(addsuffix .spl,$(SPL_FILES))
+
+# Main library compilation
+#
+
+FILES[] =
+    ssh_statecalls
+    ssh_server_automaton
+    ssh_server_channel
+    ssh_message
+    ssh_classify
+    ssh_utils
+    ssh_pty
+    ssh_tty
+    ssh_algorithms
+    ssh_version
+    ssh_pool
+    ssh_keys
+    ssh_kex
+    ssh_channel
+    ssh_env_t
+    ssh_transport
+    ssh_userauth
+    ssh_config
+    ssh_env
+    ssh_server
+
+SSH_OCAML = $(OCamlLibrary ssh, $(FILES))
+
+$(SSH_OCAML): $(ROOT)/dist/cryptokit/cryptokit.cmi $(ROOT)/tools/mpl/mpl_stdlib.cmi $(LIB_DIR)/ounix/ounix.cmxa $(ROOT)/tools/spl/spl_stdlib.cmi
+
+
+.DEFAULT: $(SSH_OCAML)
+
+clean:
+	$(CLEAN) $(GEN_FILES)

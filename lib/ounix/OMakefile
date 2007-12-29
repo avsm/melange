@@ -1,0 +1,20 @@
+static. =
+	CAMLLIB=$(shell ocamlc -where)
+
+.PHONY: clean
+
+INCLUDES += $(CAMLLIB)
+StaticCLibrary(ounix_stubs, ounix_stubs)
+
+FILES[] =
+   olog
+   ounix
+
+PROGRAM = ounix
+
+OCAML_CLIBS += ounix_stubs
+
+.DEFAULT: $(OCamlLibrary $(PROGRAM),$(FILES))
+
+clean:
+	$(CLEAN) $(PROGRAM)
