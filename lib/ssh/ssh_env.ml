@@ -171,24 +171,23 @@ class virtual env (conf:Ssh_env_t.t) =
             conf pack
 
     method private read_ssh_packet =
-        DEBUG("received packet:");
         let module C = Ssh_classify in
         try
             match self#recv with
             |C.DHGexSHA1 x ->
-                DEBUG_CMD(Ssh_message.Dhgexsha1.prettyprint x);
+                (* DEBUG_CMD(Ssh_message.Dhgexsha1.prettyprint x); *)
                 self#dispatch_dhgexsha1_packet x
             |C.DHGroupSHA1 x ->
-                DEBUG_CMD(Ssh_message.Dhgroupsha1.prettyprint x); 
+                (* DEBUG_CMD(Ssh_message.Dhgroupsha1.prettyprint x); *)
                 self#dispatch_dhg1sha1_packet x
             |C.Transport x ->
-                DEBUG_CMD(Ssh_message.Transport.prettyprint x);
+                (* DEBUG_CMD(Ssh_message.Transport.prettyprint x); *)
                 self#dispatch_transport_packet x
             |C.Auth x ->
-                DEBUG_CMD(Ssh_message.Auth.prettyprint x);
+                (* DEBUG_CMD(Ssh_message.Auth.prettyprint x); *)
                 self#dispatch_auth_packet x
             |C.Channel x ->
-                DEBUG_CMD(Ssh_message.Channel.prettyprint x);
+                (* DEBUG_CMD(Ssh_message.Channel.prettyprint x); *)
                 self#dispatch_channel_packet x
             |C.Unknown ->
                 failwith "unknown packet" (* XXX dont die here, xmit Unimplemented *)
@@ -241,6 +240,7 @@ class virtual env (conf:Ssh_env_t.t) =
         let server_to_client_key = derivefn key_size_sc 'D' in
         let integrity_client_to_server = derivefn mac_len_cs 'E' in
         let integrity_server_to_client = derivefn mac_len_sc 'F' in
+        (*
         let hob = Ssh_utils.hex_of_binary in
         DEBUG ("c->s iv   (A): " ^ (hob client_to_server_iv));
         DEBUG ("s->c iv   (B): " ^ (hob server_to_client_iv));
@@ -248,6 +248,7 @@ class virtual env (conf:Ssh_env_t.t) =
         DEBUG ("s->c key  (D): " ^ (hob server_to_client_key));
         DEBUG ("c->s hash (E): " ^ (hob integrity_client_to_server));
         DEBUG ("s->c hash (F): " ^ (hob integrity_server_to_client));
+        *)
         (* Layering violation here, but just putting this logic here saves
          * passing a load of variables between the derived client/server classes *)
         let module AC = Ssh_algorithms.Cipher in

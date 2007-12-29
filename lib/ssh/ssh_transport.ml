@@ -86,14 +86,11 @@ module Packet = struct
 
     let marshal ~block_size ~padfn ~cryptfn ~macfn ~splfn (conf:Ssh_env_t.t) (data:xmit_t) =
         let fd = conf.Ssh_env_t.fd in
-        let log = conf.Ssh_env_t.log in
         let module M = Mpl_stdlib in
         let txenv = Ssh_pool.get () in
         (* XXX compression not supported yet *)
         let d env =
             let pack = data env in
-            DEBUG("transmitting:");
-            DEBUG_CMD(pack#prettyprint);
             splfn pack
         in
             
