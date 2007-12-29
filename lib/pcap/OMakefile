@@ -1,0 +1,17 @@
+.PHONY: clean
+
+OCAMLINCLUDES += $(MPL_DIR)
+
+MPL_FILES[] = pcap_entry
+MPLGenerated($(MPL_FILES))
+
+FILES[] =
+	pcap_entry
+	pcap
+
+PROGRAM = pcap
+
+.DEFAULT: $(OCamlLibrary $(PROGRAM),$(FILES))
+
+clean:
+	$(CLEAN) $(PROGRAM)

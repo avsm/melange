@@ -74,4 +74,4 @@ $(SSH_OCAML): $(ROOT)/dist/cryptokit/cryptokit.cmi $(ROOT)/tools/mpl/mpl_stdlib.
 .DEFAULT: $(SSH_OCAML)
 
 clean:
-	$(CLEAN) $(GEN_FILES)
+	$(CLEAN) $(GEN_FILES) dllssh_stubs.so

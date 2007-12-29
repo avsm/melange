@@ -1,0 +1,17 @@
+.PHONY: clean
+
+OCAMLINCLUDES += $(MPL_DIR)
+
+MPL_FILES[] = dhcp
+MPLGenerated($(MPL_FILES))
+
+FILES[] =
+	dhcp
+	dhcplib
+
+PROGRAM = dhcp
+
+.DEFAULT: $(OCamlLibrary $(PROGRAM),$(FILES))
+
+clean:
+	$(CLEAN) $(PROGRAM)

@@ -1,0 +1,14 @@
+.PHONY: clean
+
+OCAMLINCLUDES += $(MPL_DIR)
+
+MPL_FILES[] = ipv4
+MPLGenerated($(MPL_FILES))
+
+FILES[] = ipv4
+PROGRAM = ipv4
+
+.DEFAULT: $(OCamlLibrary $(PROGRAM),$(FILES))
+
+clean:
+	$(CLEAN) $(PROGRAM)

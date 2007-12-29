@@ -1,0 +1,14 @@
+.PHONY: clean
+
+OCAMLINCLUDES += $(MPL_DIR)
+
+MPL_FILES[] = icmp
+MPLGenerated($(MPL_FILES))
+
+FILES[] = icmp
+PROGRAM = icmp
+
+.DEFAULT: $(OCamlLibrary $(PROGRAM),$(FILES))
+
+clean:
+	$(CLEAN) $(PROGRAM)

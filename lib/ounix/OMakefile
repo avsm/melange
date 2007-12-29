@@ -17,4 +17,4 @@ OCAML_CLIBS += ounix_stubs
 .DEFAULT: $(OCamlLibrary $(PROGRAM),$(FILES))
 
 clean:
-	$(CLEAN) $(PROGRAM)
+	$(CLEAN) $(PROGRAM) dllounix_stubs.so

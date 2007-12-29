@@ -9,6 +9,7 @@
 \.cma$
 \.cmx$
 \.cmxa$
+\.opt$
 \.a$
 \.o$
 /\._d/
