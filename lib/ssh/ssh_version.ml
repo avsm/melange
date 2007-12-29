@@ -30,11 +30,29 @@ let to_string p =
 
 exception Parse_failure
 
+(* Read version character by character.  Cant use channels due to buffering *)
+let read_version_line ofd =
+	let buf = String.create 256 in
+	let ver = ref "" in
+	let off = ref 0 in
+	let got_nl = ref false in
+	while not (!got_nl) do
+		ofd#read buf !off 1;
+		match String.get buf !off with
+		|'\n' ->
+			(* newline is here, so stop reading *)
+			got_nl := true;
+			ver := String.sub buf 0 !off
+		|'\r' ->
+			(* just discard this, as it will be followed by a newline *)
+			()
+		|_ -> incr off
+	done;
+	!ver
+	
 let unmarshal ofd = 
-    (* XXX - need to make sure input_line is safe wrt \r\n - avsm *)
-    let str = input_line ofd#in_channel in
-    (* there might be ASCII 13 characters in the buffer and probably    *)
-    (* one stuck on the end.                                            *)
+    let str = read_version_line ofd in
+	prerr_endline (sprintf "Remote version is: %s" str);
     (* It should be in form SSH-protoversion-softwareversioncomments    *)
     if String.sub str 0 4 <> "SSH-" 
     then raise Parse_failure;
