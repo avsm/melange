@@ -19,7 +19,6 @@ OCAML_LIBS[] +=
 
 OCAML_CLIBS[] +=
     $(LIB_DIR)/ounix/ounix_stubs
-    $(LIB_DIR)/ssh/libssh_pty_stubs
 
 OCAML_OTHER_LIBS[] +=
     unix

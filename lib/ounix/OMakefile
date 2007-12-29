@@ -4,7 +4,7 @@ static. =
 .PHONY: clean
 
 INCLUDES += $(CAMLLIB)
-StaticCLibrary(ounix_stubs, ounix_stubs)
+UNIX_CLIB = $(StaticCLibrary ounix_stubs, ounix_stubs pty_stubs)
 
 FILES[] =
    olog
@@ -14,7 +14,7 @@ PROGRAM = ounix
 
 OCAML_CLIBS += ounix_stubs
 
-.DEFAULT: $(OCamlLibrary $(PROGRAM),$(FILES))
+.DEFAULT: $(OCamlLibrary $(PROGRAM),$(FILES)) $(UNIX_CLIB)
 
 clean:
 	$(CLEAN) $(PROGRAM) dllounix_stubs.so

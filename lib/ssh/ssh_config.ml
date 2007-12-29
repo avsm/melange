@@ -74,11 +74,11 @@ class type server_config = object
     (* Request a pty: id -> modes -> (row,col,xpix,ypix) -> (pty,pty_window) *)
     method connection_add_pty : Ssh_channel.channel -> string ->
         (int32 * int32 * int32 * int32) ->
-        (Ssh_pty.pty * Ssh_pty.pty_window) option
+        (Ounix.Pty.pty * Ounix.Pty.pty_window) option
     (* Request a command exec: id -> cmd -> exec_response *)
     method connection_request_exec : Ssh_channel.channel -> string -> Server.exec_response
     (* Request a shell : id -> exec_response *)
     method connection_request_shell : Ssh_channel.channel ->
-        (Ssh_pty.pty * Ssh_pty.pty_window) option -> Server.exec_response
+        (Ounix.Pty.pty * Ounix.Pty.pty_window) option -> Server.exec_response
 
 end

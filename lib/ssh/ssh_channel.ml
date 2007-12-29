@@ -75,11 +75,11 @@ class channel
     method exit_status = exit_status
     
     (* Register a pty, also makes channel interactive *)
-    method set_pty ((pt,pw): (Ssh_pty.pty * Ssh_pty.pty_window)) =
+    method set_pty ((pt,pw): (Ounix.Pty.pty * Ounix.Pty.pty_window)) =
         pty <- Some (pt,pw);
         interactive <- true
     method close_pty =
-        umay (fun (pt,_) -> Ssh_pty.close_pty pt) pty
+        umay (fun (pt,_) -> Ounix.Pty.close_pty pt) pty
        
     method set_pid (po:int) = pid <- Some po
     method set_close (x:bool) = close <- x

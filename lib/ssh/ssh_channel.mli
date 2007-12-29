@@ -18,7 +18,7 @@ class channel :
     val our_packet_size : int32
     val mutable our_window : int32
     val mutable pid : int option
-    val mutable pty : (Ssh_pty.pty * Ssh_pty.pty_window) option
+    val mutable pty : (Ounix.Pty.pty * Ounix.Pty.pty_window) option
     val mutable stderr : Ounix.stream_odescr option
     val mutable stdin : Ounix.stream_odescr option
     val mutable stdout : Ounix.stream_odescr option
@@ -38,7 +38,7 @@ class channel :
     method our_packet_size : int32
     method our_window : int32
     method pid : int option
-    method pty : (Ssh_pty.pty * Ssh_pty.pty_window) option
+    method pty : (Ounix.Pty.pty * Ounix.Pty.pty_window) option
     method set_close : bool -> unit
     method set_exit_status : int -> unit
     method set_other_id : int32 -> unit
@@ -47,7 +47,7 @@ class channel :
     method set_other_window : int32 -> unit
     method set_our_window : int32 -> unit
     method set_pid : int -> unit
-    method set_pty : Ssh_pty.pty * Ssh_pty.pty_window -> unit
+    method set_pty : Ounix.Pty.pty * Ounix.Pty.pty_window -> unit
     method set_stderr : Ounix.stream_odescr option -> unit
     method set_stdin : Ounix.stream_odescr option -> unit
     method set_stdout : Ounix.stream_odescr option -> unit

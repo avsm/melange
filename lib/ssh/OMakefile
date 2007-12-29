@@ -13,8 +13,6 @@ section
 	INCLUDES += $(CAMLLIB)
 	ssh_pty_stubs.o:
 
-PTY_STUB = $(StaticCLibrary libssh_pty_stubs, ssh_pty_stubs)
-
 # MPL generation
 #
 GEN_FILES[] =
@@ -51,7 +49,6 @@ FILES[] =
     ssh_message
     ssh_classify
     ssh_utils
-    ssh_pty
     ssh_tty
     ssh_algorithms
     ssh_version

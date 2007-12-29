@@ -44,7 +44,7 @@ NATIVE_ENABLED = true
 
 OCAMLFLAGS += -dtypes 
 
-CLEAN = rm -rf *.cm* *~ .\#* *.o *.obj *.a *.lib *.exe *.omc *.install *.tmp
+CLEAN = rm -rf *.cm* *~ .\#* *.o *.obj *.a *.lib *.exe *.omc *.install *.tmp *.annot
 MPL_DIR = $(ROOT)/tools/mpl
 SPL_DIR = $(ROOT)/tools/spl
 DIST_DIR = $(ROOT)/dist

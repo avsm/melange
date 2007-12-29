@@ -10,6 +10,7 @@
 \.cmx$
 \.cmxa$
 \.opt$
+\.run$
 \.a$
 \.o$
 /\._d/
@@ -33,3 +34,4 @@
 ^apps/deens/deens.pid$
 ^apps/deens/deens.conf$
 ^apps/deens/gen_deens_ml$
+^dist/getopt/doc/

@@ -13,6 +13,27 @@ val join_multicast_group : Unix.file_descr -> Unix.inet_addr -> unit
 (** Convert socket address into a string *)
 val string_of_sockaddr : Unix.sockaddr -> string
 
+module Pty :
+  sig
+    type pty = {
+      masterfd : Unix.file_descr;
+      slavefd : Unix.file_descr;
+      name : string;
+    }
+    type pty_window = {
+      row : int32;
+      col : int32;
+      xpixel : int32;
+      ypixel : int32;
+    }
+    exception Pty_error of string
+    val open_pty : unit -> pty
+    val switch_controlling_pty : pty -> unit
+    val window_size : pty -> pty_window -> unit
+    val close_pty : pty -> unit
+    val string_of_pty : pty -> string
+  end
+
 class type odescr =
   object
     method close : unit

@@ -106,11 +106,11 @@ class mlsshd_config conf =
         ()
     
     method connection_add_pty id modes (row,col,xpixel,ypixel) =
-        let pty = Ssh_pty.open_pty () in
-        let tio = tcgetattr pty.Ssh_pty.masterfd in
+        let pty = Ounix.Pty.open_pty () in
+        let tio = tcgetattr pty.Ounix.Pty.masterfd in
         Tty.parse_modes tio modes;
-        tcsetattr pty.Ssh_pty.masterfd TCSANOW tio;
-        let pwin = {Ssh_pty.row=row; col=col; xpixel=xpixel; ypixel=ypixel} in
+        tcsetattr pty.Ounix.Pty.masterfd TCSANOW tio;
+        let pwin = {Ounix.Pty.row=row; col=col; xpixel=xpixel; ypixel=ypixel} in
         Some (pty, pwin)
 
     method connection_request_exec chan cmd =
@@ -146,13 +146,13 @@ class mlsshd_config conf =
       |Some (pty, pty_window) ->
         let pid = fork () in
         if pid = 0 then begin
-             close pty.Ssh_pty.masterfd;
-             Ssh_pty.switch_controlling_pty pty;
-             Ssh_pty.window_size pty pty_window;
-             dup2 pty.Ssh_pty.slavefd stdin;
-             dup2 pty.Ssh_pty.slavefd stdout;
-             dup2 pty.Ssh_pty.slavefd stderr;
-             close pty.Ssh_pty.slavefd;
+             close pty.Ounix.Pty.masterfd;
+             Ounix.Pty.switch_controlling_pty pty;
+             Ounix.Pty.window_size pty pty_window;
+             dup2 pty.Ounix.Pty.slavefd stdin;
+             dup2 pty.Ounix.Pty.slavefd stdout;
+             dup2 pty.Ounix.Pty.slavefd stderr;
+             close pty.Ounix.Pty.slavefd;
              let args = Array.make 1 "/bin/sh" in
              try execv "/bin/sh" args
              with Unix_error (x,s,y) -> begin
@@ -160,12 +160,12 @@ class mlsshd_config conf =
                 Pervasives.exit 1
             end
         end;
-        (* XXX close pty.Ssh_pty.slavefd in parent? probably - avsm *)
+        (* XXX close pty.Ounix.Pty.slavefd in parent? probably - avsm *)
         (* Need to dup so we have two distinct fds to retrieve the appropriate
            session.  I think this isn't strictly needed any more, but just to be
            safe until all the 'channel sanity checks' for unique keys go in *)
-        let stdin = Some (Unix.dup pty.Ssh_pty.masterfd) in
-        let stdout = Some (pty.Ssh_pty.masterfd) in
+        let stdin = Some (Unix.dup pty.Ounix.Pty.masterfd) in
+        let stdout = Some (pty.Ounix.Pty.masterfd) in
         let (stderr:Unix.file_descr option) = None in
         Some (pid, stdin, stdout, stderr)
       |None ->
