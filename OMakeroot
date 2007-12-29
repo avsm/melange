@@ -42,6 +42,8 @@ DefineCommandVars()
 BYTE_ENABLED = true
 NATIVE_ENABLED = true
 
+OCAMLFLAGS += -dtypes 
+
 CLEAN = rm -rf *.cm* *~ .\#* *.o *.obj *.a *.lib *.exe *.omc *.install *.tmp
 MPL_DIR = $(ROOT)/tools/mpl
 SPL_DIR = $(ROOT)/tools/spl
