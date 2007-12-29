@@ -71,15 +71,15 @@ rule token = parse
 | identifier { IDENTIFIER(Lexing.lexeme lexbuf, next_token lexbuf) }
 | statecall { STATECALL(Lexing.lexeme lexbuf, next_token lexbuf) }
 | number { INT(int_of_string (Lexing.lexeme lexbuf), next_token lexbuf) }
-| "/*" { comment lexbuf; token lexbuf }
-| "//" { single_comment lexbuf; token lexbuf }
+| "/*" { ignore(comment lexbuf); token lexbuf }
+| "//" { ignore(single_comment lexbuf); token lexbuf }
 | eof { EOF(next_token lexbuf) }
 
 and comment = parse
-| "/*" { comment lexbuf; comment lexbuf }
+| "/*" { ignore(comment lexbuf); comment lexbuf }
 | "*/" { true }
 | '\n' { new_line lexbuf; comment lexbuf }
-| _ as lxm { comment lexbuf }
+| _ { comment lexbuf }
 
 and single_comment = parse
 | '\n' { new_line lexbuf; true }
