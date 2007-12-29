@@ -144,9 +144,6 @@ let parse_config_and_cmdline flist vtys =
 	let config_hash = Hashtbl.create 1 in
     parse_cmdline config_hash vtys;
     List.iter (parse_config config_hash vtys) flist;
-	Hashtbl.iter (fun k v ->
-		print_endline (sprintf "%s == %s" k (string_of_var_val v));
-	) config_hash;
 	config_hash
     
 class config (ty:var_types) (fname:string) =
@@ -165,7 +162,7 @@ class config (ty:var_types) (fname:string) =
 				let vals = Hashtbl.find_all config_hash k in
 				prerr_endline ("Key: " ^ k);
 				List.iter (fun v -> 
-					prerr_endline (sprintf "  %s -> %s (from ??)" k (string_of_var_val v))
+					prerr_endline (sprintf "  %s -> %s%s" k (string_of_var_val v) (Config_location.string_of_location v.v_loc))
 				) vals;
 			) keys
 			

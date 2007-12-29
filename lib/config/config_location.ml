@@ -51,10 +51,10 @@ let next_token lexbuf =
     l
         
 let string_of_location l =
+	let filestr = match l.file_name with |None ->"" |Some x -> sprintf " (%s)" x in
     let c = if l.column_num > 0 then sprintf " char %d" l.column_num else
         "" in
     if l.line_num >= 0 then
-        sprintf " at line %d%s:" l.line_num c
+        sprintf " at line %d%s%s:" l.line_num c filestr
     else
-        sprintf " in command line%s: "
-            (match l.file_name with |None ->"" |Some x -> sprintf " (%s)" x)
+        sprintf " in command line%s: " filestr
