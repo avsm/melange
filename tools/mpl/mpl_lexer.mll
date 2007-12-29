@@ -77,15 +77,15 @@ rule token = parse
 | uppercase identchar* { UIDENTIFIER(Lexing.lexeme lexbuf, next_token lexbuf) }
 | lowercase identchar* { IDENTIFIER(Lexing.lexeme lexbuf, next_token lexbuf) }
 | int_literal { INT(int_of_string (Lexing.lexeme lexbuf), next_token lexbuf) }
-| "/*" { comment lexbuf; token lexbuf }
-| "//" { single_comment lexbuf; token lexbuf }
+| "/*" { ignore(comment lexbuf); token lexbuf }
+| "//" { ignore(lexbuf); token lexbuf }
 | eof { EOF(next_token lexbuf) }
 | _ { raise (Mpl_syntaxtree.Syntax_error  (!Mpl_location.current_location)) }
 and comment = parse
-| "/*" { comment lexbuf; comment lexbuf }
+| "/*" { ignore(comment lexbuf); comment lexbuf }
 | "*/" { true }
-| '\n' { new_line lexbuf; comment lexbuf }
-| _ as lxm { comment lexbuf }
+| '\n' { ignore(new_line lexbuf); comment lexbuf }
+| _ { comment lexbuf }
 
 and single_comment = parse
 | '\n' { new_line lexbuf; true }
