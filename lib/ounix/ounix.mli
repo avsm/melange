@@ -51,8 +51,6 @@ class stream_odescr :
     method close : unit
     method exception_ready : unit
     method fd : Unix.file_descr
-    method in_channel : in_channel
-    method out_channel : out_channel
     method read : string -> int -> int -> unit
     method read_buf : int -> string
     method read_ready : unit
@@ -69,8 +67,6 @@ class tcp_odescr :
     method close : unit
     method exception_ready : unit
     method fd : Unix.file_descr
-    method in_channel : in_channel
-    method out_channel : out_channel
     method read : string -> int -> int -> unit
     method read_buf : int -> string
     method read_ready : unit

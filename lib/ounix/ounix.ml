@@ -139,9 +139,6 @@ class stream_odescr
             |Unix_error (EAGAIN,_,_) -> ()
         done
         
-    method in_channel = in_channel_of_descr fd
-    method out_channel = out_channel_of_descr fd
-    
     method read = self#atomicio Unix.read
     method write = self#atomicio Unix.write
 
