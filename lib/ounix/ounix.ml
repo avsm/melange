@@ -24,13 +24,13 @@ module Bindings = struct
   external set_tcp_nodelay : Unix.file_descr -> bool -> unit =
     "ounix_set_tcp_nodelay"
       
-  external set_ip_multicast_ttl : Unix.file_descr -> int -> int =
+  external set_ip_multicast_ttl : Unix.file_descr -> int -> unit =
     "ounix_set_ip_multicast_ttl"
       
-  external set_ip_multicast_loop : Unix.file_descr -> int -> int =
+  external set_ip_multicast_loop : Unix.file_descr -> int -> unit =
     "ounix_set_ip_multicast_loop"
       
-  external join_multicast_group : Unix.file_descr -> int -> int -> int =
+  external join_multicast_group : Unix.file_descr -> int -> int -> unit =
     "ounix_join_multicast_group"
 
   external daemon : int -> int -> unit =
@@ -76,13 +76,11 @@ let set_tcp_nodelay = Bindings.set_tcp_nodelay
 
 (** Set the multicast TTL on an fd to x *)
 let set_ip_multicast_ttl fd x = 
-  if Bindings.set_ip_multicast_ttl fd x < 0
-  then failwith (Printf.sprintf "Unable to set multicast TTL := %d" x)
+  Bindings.set_ip_multicast_ttl fd x
 
 (** Set the IP_MULTICAST_LOOP on an fd to x *)
 let set_ip_multicast_loop fd x = 
-  if Bindings.set_ip_multicast_loop fd x < 0
-  then failwith (Printf.sprintf "Unable to set IP_MULTICAST_LOOP := %d" x)
+  Bindings.set_ip_multicast_loop fd x
 
 (** Add the fd to the multicast group with address addr *)
 let join_multicast_group fd addr = 
@@ -101,8 +99,7 @@ let join_multicast_group fd addr =
   let octets = octets_of_addr addr in
   let msw = (octets.(0) lsl 8) lor octets.(1)
   and lsw = (octets.(2) lsl 8) lor octets.(3) in
-  if Bindings.join_multicast_group fd msw lsw < 0
-  then failwith (Printf.sprintf "Unable to join multicast group")
+  Bindings.join_multicast_group fd msw lsw
 
 (* Daemonize process using daemon(3) *)
 let daemon ?(chdir=true) ?(close=true) () =

@@ -38,51 +38,35 @@
 extern void uerror (char * cmdname, value arg) Noreturn;
 
 CAMLprim value
-ounix_set_tcp_nodelay (value csock, value o)
+ounix_set_tcp_nodelay (value socket, value o)
 {
-    CAMLparam2 (csock,o);
-    int s = Int_val(csock);
     int opt = (Bool_val(o)) ? 1 : 0;
-    if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (void *)&opt, sizeof(opt)) == -1)
+    if (setsockopt(Int_val(socket), IPPROTO_TCP, TCP_NODELAY, (void *)&opt, sizeof(opt)) == -1)
 		uerror("setsockopt", Nothing);
-    CAMLreturn(Val_unit);
+	return Val_unit;
 }
 
-value
+CAMLprim value
 ounix_set_ip_multicast_ttl (value socket, value ttl)
 {
-    CAMLparam2(socket, ttl);
-    CAMLlocal1(result);
-
-    int fd = Int_val(socket);
     unsigned char t = Int_val(ttl);
-    int r = setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, &t, sizeof(t));
-
-    result = Val_int(r);    
-    CAMLreturn(result);
+    if (setsockopt(Int_val(socket), IPPROTO_IP, IP_MULTICAST_TTL, &t, sizeof(t)) == -1)
+		uerror("setsockopt", Nothing);
+	return Val_unit;
 }
 
-value
+CAMLprim value
 ounix_set_ip_multicast_loop (value socket, value v)
 {
-    CAMLparam2(socket, v);
-    CAMLlocal1(result);
-    
-    int fd = Int_val(socket);
-    u_char loop = Int_val(v);
-    int r = setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, &loop, sizeof(loop));
-
-    result = Val_int(r);
-    CAMLreturn(result);
+    unsigned char loop = Int_val(v);
+    if (setsockopt(Int_val(socket), IPPROTO_IP, IP_MULTICAST_LOOP, &loop, sizeof(loop)) == -1)
+		uerror("setsockopt", Nothing);
+	return Val_unit;
 }
 
-value
+CAMLprim value
 ounix_join_multicast_group (value socket, value group_msw, value group_lsw)
 {
-    CAMLparam3(socket, group_msw, group_lsw);
-    CAMLlocal1(result);
-    
-    int sd = Int_val(socket);
     in_addr_t group = (Int_val(group_msw) << 16) | Int_val(group_lsw);
     
     int r;
@@ -91,16 +75,13 @@ ounix_join_multicast_group (value socket, value group_msw, value group_lsw)
     mreq.imr_multiaddr.s_addr=htonl(group);
     mreq.imr_interface.s_addr=htonl(INADDR_ANY);
       
-   if (!IN_MULTICAST(ntohl(mreq.imr_multiaddr.s_addr))) {
-        /* XXX raise an exception here instead of exit - avsm */
-        fprintf(stderr, "given address '%s' is not multicast\n",inet_ntoa(mreq.imr_multiaddr));
-        exit(1);
-   }
+   if (!IN_MULTICAST(ntohl(mreq.imr_multiaddr.s_addr)))
+		failwith("address is not multicast");
   
-   r = setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *) &mreq, sizeof(mreq));
-
-   result = Val_int(r);
-   CAMLreturn(result);
+   if (setsockopt(Int_val(socket), IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *) &mreq, sizeof(mreq)) == -1)
+		uerror("setsockopt", Nothing);
+		
+   return Val_unit;
 }
 
 CAMLprim value
