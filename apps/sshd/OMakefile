@@ -27,8 +27,6 @@ OCAML_OTHER_LIBS[] +=
 
 CONF_PROGRAM = $(OCamlProgram sshd, server ssh_openssh_formats sshd)
 
-OCAML_LIB_FLAGS += -cclib -lounix_stubs -cclib -llibssh_pty_stubs -cclib -lcryptokit -cclib -ldllcryptolib.so
-
 .DEFAULT: $(CONF_PROGRAM)
 
 clean:
