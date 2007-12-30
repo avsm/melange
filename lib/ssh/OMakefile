@@ -35,9 +35,10 @@ MPLGenerated($(MPL_FILES))
 #
 SPLC=$(ROOT)/tools/spl/splc
 SPL_FILES = ssh_server_automaton ssh_server_channel
+SPL_SOURCES = $(addsuffix .spl,$(SPL_FILES))
 
-$(addsuffix .ml, $(SPL_FILES)) ssh_statecalls.ml: $(SPLC)
-	$(SPLC) -t ocaml -s ssh_statecalls -hdir $(SPL_DIR) -d false $(addsuffix .spl,$(SPL_FILES))
+$(addsuffix .ml, $(SPL_FILES)) ssh_statecalls.ml: $(SPLC) $(SPL_SOURCES)
+	$(SPLC) -t ocaml -s ssh_statecalls -hdir $(SPL_DIR) -d false $(SPL_SOURCES)
 
 # Main library compilation
 #
