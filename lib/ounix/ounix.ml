@@ -33,6 +33,8 @@ module Bindings = struct
   external join_multicast_group : Unix.file_descr -> int -> int -> int =
     "ounix_join_multicast_group"
 
+  external daemon : int -> int -> unit =
+	"ounix_daemon"
 end      
 
 (* Pseudo terminal handling functions *)
@@ -102,6 +104,10 @@ let join_multicast_group fd addr =
   if Bindings.join_multicast_group fd msw lsw < 0
   then failwith (Printf.sprintf "Unable to join multicast group")
 
+(* Daemonize process using daemon(3) *)
+let daemon ?(chdir=true) ?(close=true) () =
+	Bindings.daemon (if chdir then 0 else 1) (if close then 0 else 1)
+	
 let string_of_sockaddr = function
   |ADDR_UNIX (path) ->
     Printf.sprintf "\"%s\"" path

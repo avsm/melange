@@ -13,6 +13,9 @@ val join_multicast_group : Unix.file_descr -> Unix.inet_addr -> unit
 (** Convert socket address into a string *)
 val string_of_sockaddr : Unix.sockaddr -> string
 
+(** Daemonize process using daemon(3) *)
+val daemon : ?chdir:bool -> ?close:bool -> unit -> unit
+
 module Pty :
   sig
     type pty = {

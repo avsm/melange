@@ -33,13 +33,18 @@
 #include <caml/callback.h>
 #include <caml/signals.h>
 
+/* From ocaml-src/otherlibs/unix/unixsupport.h */
+#define Nothing ((value) 0)
+extern void uerror (char * cmdname, value arg) Noreturn;
+
 CAMLprim value
 ounix_set_tcp_nodelay (value csock, value o)
 {
     CAMLparam2 (csock,o);
     int s = Int_val(csock);
     int opt = (Bool_val(o)) ? 1 : 0;
-    setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (void *)&opt, sizeof(opt));
+    if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (void *)&opt, sizeof(opt)) == -1)
+		uerror("setsockopt", Nothing);
     CAMLreturn(Val_unit);
 }
 
@@ -96,4 +101,12 @@ ounix_join_multicast_group (value socket, value group_msw, value group_lsw)
 
    result = Val_int(r);
    CAMLreturn(result);
+}
+
+CAMLprim value
+ounix_daemon (value nochdir, value noclose)
+{
+	if (daemon(Int_val(nochdir), Int_val(noclose)) == -1)
+		uerror("daemon", Nothing);
+	return Val_unit;
 }
