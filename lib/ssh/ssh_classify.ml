@@ -18,7 +18,7 @@
 
 open Ssh_message
 
-exception Unknown_packet
+exception Unknown_packet of int32 (* sequence number of unknown packet *)
 
 type t =
     | Transport of Transport.o
@@ -26,7 +26,7 @@ type t =
     | DHGroupSHA1 of Dhgroupsha1.o
     | DHGexSHA1 of Dhgexsha1.o
     | Channel of Channel.o
-    | Unknown
+    | Unknown of int32 (* sequence number of unknown packet *)
 
 type c =
     | TransportGeneric
@@ -53,7 +53,7 @@ let recv_statecall x = match x with
     | DHGroupSHA1 x -> Some (Dhgroupsha1.recv_statecall x :> Ssh_statecalls.t)
     | DHGexSHA1 x -> Some (Dhgexsha1.recv_statecall x :> Ssh_statecalls.t)
     | Channel x -> global_recv x
-    | Unknown -> None
+    | Unknown _ -> None
 
 let prettyprint x = match x with
     | Transport x -> Transport.prettyprint x
@@ -61,7 +61,7 @@ let prettyprint x = match x with
     | DHGroupSHA1 x -> Dhgroupsha1.prettyprint x
     | DHGexSHA1 x -> Dhgexsha1.prettyprint x
     | Channel x -> Channel.prettyprint x
-    | Unknown -> ()
+    | Unknown x -> Printf.printf "Unknown packet (#%lu)\n" x
 
 let peek env =
     let module M = Mpl_stdlib in
