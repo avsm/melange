@@ -50,9 +50,12 @@ SPL_DIR = $(ROOT)/tools/spl
 DIST_DIR = $(ROOT)/dist
 LIB_DIR = $(ROOT)/lib
 
+.SUBDIRS: . tools dist
+	include OMakefile
+	export
+
 MPLGenerated(sources) = 
         MPLC = $(MPL_DIR)/mplc
-        MPL_STDLIB = $(MPL_DIR)/mpl_stdlib.cmi
         OCAMLINCLUDES += $(MPL_DIR)
         export OCAMLINCLUDES
         if $(not $(defined MPL_FLAGS))
@@ -63,16 +66,30 @@ MPLGenerated(sources) =
                 rm -f $(addsuffix .ml, $(sources))
         foreach (source, $(sources))
                 OCamlGeneratedFiles($(source).ml)
-                $(source).ml: $(source).mpl $(MPLC)
+                $(source).ml: $(source).mpl $(MPL_COMPILER)
                         $(MPLC) $(MPL_FLAGS) $< > $@
                 OCAMLFLAGS += -w yu
 		$(addsuffixes .cmo .cmx .cmi .o, $(source)): $(MPL_STDLIB)
                 clean:
+
+SPLGenerated(statecalls, sources, debug) = 
+        SPLC = $(SPL_DIR)/splc
+        OCAMLINCLUDES += $(SPL_DIR)
+        export OCAMLINCLUDES
+	spl_sources = $(addsuffix .spl, $(sources))
+	spl_gen_files = $(addsuffix .ml, $(statecalls) $(sources))
+
+	$(spl_gen_files): $(SPL_COMPILER) $(spl_sources)
+		$(SPLC) -t ocaml -s $(statecalls) -hdir $(SPL_DIR) -d $(debug) $(spl_sources)
+
+        .PHONY: clean
+        clean:
+                rm -f $(spl_gen_files) 
 
 VERBOSE = true
 
 #
 # Include the OMakefile in this directory.
 #
-.SUBDIRS: . tools dist lib apps
+.SUBDIRS: lib apps
 

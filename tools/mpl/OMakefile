@@ -25,7 +25,11 @@ PROGRAM = mplc
 STDLIB = mpl_stdlib
 STDLIB_FILES[] = mpl_stdlib
 
-.DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES)) $(OCamlLibrary $(STDLIB), $(STDLIB_FILES))
+MPL_COMPILER = $(OCamlProgram $(PROGRAM), $(FILES))
+MPL_STDLIB = $(OCamlLibrary $(STDLIB), $(STDLIB_FILES))
+export MPL_COMPILER MPL_STDLIB
+
+.DEFAULT: $(MPL_COMPILER) $(MPL_STDLIB)
 
 clean:
-	$(CLEAN) $(PROGRAM) $(PROGRAM).opt $(PROGRAM).run $(GEN_FILES) $(STDLIB)
+	$(CLEAN) $(MPL_COMPILER) $(MPL_STDLIB) $(GEN_FILES)

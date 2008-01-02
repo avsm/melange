@@ -23,9 +23,11 @@ FILES[] =
    spl_gui
    splc
 
-PROGRAM = splc
+SPL_COMPILER = $(OCamlProgram splc, $(FILES))
+SPL_STDLIB = $(OCamlLibrary spl_stdlib, spl_stdlib)
+export SPL_COMPILER SPL_STDLIB
 
-.DEFAULT: $(OCamlProgram $(PROGRAM), $(FILES)) $(OCamlLibrary spl_stdlib, spl_stdlib)
+.DEFAULT: $(SPL_COMPILER) $(SPL_STDLIB)
 
 clean:
-	$(CLEAN) $(PROGRAM) $(PROGRAM).opt $(PROGRAM).run $(GEN_FILES)
+	$(CLEAN) $(SPL_COMPILER) $(SPL_STDLIB) $(GEN_FILES)
