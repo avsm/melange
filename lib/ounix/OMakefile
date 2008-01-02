@@ -1,9 +1,19 @@
+# Compilation detection for pty code (util.h needed on OpenBSD, -lutil needed on Linux.)
 static. =
 	CAMLLIB=$(shell ocamlc -where)
+	PTY_H_AVAILABLE = $(VerboseCheckCHeader pty.h)
+	UTIL_H_AVAILABLE = $(VerboseCheckCHeader util.h)
+	UTIL_LIB_AVAILABLE = $(VerboseCheckCLib util, openpty)
+	PTY_CFLAGS[] = $(if $(PTY_H_AVAILABLE), -DHAVE_PTY_H. $(EMPTY_ARRAY))
+	PTY_CFLAGS[] += $(if $(UTIL_H_AVAILABLE), -DHAVE_UTIL_H, $(EMPTY_ARRAY))
+	PTY_OCAML_LIB_FLAGS = $(if $(UTIL_LIB_AVAILABLE), -cclib -lutil, $(EMPTY))
+	export
 
 .PHONY: clean
 
 INCLUDES += $(CAMLLIB)
+CFLAGS += $(PTY_CFLAGS)
+
 UNIX_CLIB = $(StaticCLibrary ounix_stubs, ounix_stubs pty_stubs)
 
 FILES[] =
@@ -13,6 +23,7 @@ FILES[] =
 PROGRAM = ounix
 
 OCAML_CLIBS += ounix_stubs
+OCAML_LIB_FLAGS += $(PTY_OCAML_LIB_FLAGS)
 
 .DEFAULT: $(OCamlLibrary $(PROGRAM),$(FILES)) $(UNIX_CLIB)
 

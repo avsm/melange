@@ -1,18 +1,3 @@
-# Compilation detection for pty code (util.h needed on OpenBSD)
-#
-static. =
-	CAMLLIB = $(shell $(OCAMLC) -where)
-	PTY_H_AVAILABLE = $(VerboseCheckCHeader pty.h)
-	UTIL_H_AVAILABLE = $(VerboseCheckCHeader util.h)
-	PTY_CFLAGS[] = $(if $(PTY_H_AVAILABLE), -DHAVE_PTY_H. $(EMPTY_ARRAY))
-	PTY_CFLAGS[] += $(if $(UTIL_H_AVAILABLE), -DHAVE_UTIL_H, $(EMPTY_ARRAY))
-	export
-
-section
-	CFLAGS += $(PTY_CFLAGS)
-	INCLUDES += $(CAMLLIB)
-	ssh_pty_stubs.o:
-
 # MPL generation
 #
 GEN_FILES[] =
