@@ -109,23 +109,19 @@ let helpopt_of_var_tys vtys =
         print_endline (sprintf "--%-18s %s" default_config_getopt_key "Output default configuration file to stdout");
         exit 1 in
     ('h', "help", Some help_msg, None)
-    
+
+(* Given a config hash, add an entry to it *)
+let add_config_entry config_hash vty v =
+    let vval = { v_name=vty.t_name; v_ty=vty; v_val=v;
+        v_loc=Config_location.cmd_location vty.t_name } in
+    Hashtbl.add config_hash vty.t_name vval
+
 (** Parse command line arguments into a list of var_vals *)
 let parse_cmdline config_hash vtys =
-    let add_config_entry vty v =
-        let vval = { v_name=vty.t_name; v_ty=vty; v_val=v;
-            v_loc=Config_location.cmd_location vty.t_name } in
-        Hashtbl.add config_hash vty.t_name vval
-    in
     try 
-        (* Populate config hash with default keys *)
-        List.iter (fun vty -> match vty.t_default with
-            |Some v -> add_config_entry vty v
-            |None -> ()
-        ) vtys;
         (* Register getopt handlers for each of the config vals *)
         let opts = List.fold_left (fun acc vty ->
-          getopt_of_var_ty add_config_entry vty :: acc) [] vtys in
+          getopt_of_var_ty (add_config_entry config_hash) vty :: acc) [] vtys in
         (* Calculate the help message *)
         let opts = helpopt_of_var_tys vtys :: opts in
         (* XXX catch getopt errors *)
@@ -142,8 +138,13 @@ let parse_config_and_cmdline flist vtys =
     (* Generate a hashtable to stick config keys in. Newer keys mask older ones,
        so the order of evaluation determines which config key entry wins *)
     let config_hash = Hashtbl.create 1 in
-    parse_cmdline config_hash vtys;
+    (* populate config hash with default keys that are the lowest priority *)
+    List.iter (fun vty -> match vty.t_default with
+       |Some v -> add_config_entry config_hash vty v
+       |None -> ()
+    ) vtys;
     List.iter (parse_config config_hash vtys) flist;
+    parse_cmdline config_hash vtys;
     config_hash
     
 class config (ty:var_types) (fname:string) =
