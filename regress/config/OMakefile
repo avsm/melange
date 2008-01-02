@@ -17,6 +17,7 @@ PROGRAM = $(OCamlProgram regress, regress)
 
 run-regress: $(PROGRAM)
 	./regress
+	env REGRESS_CMDLINE=1 ./regress -s THIS_SHOULD_BE_THE_VALUE
 
 clean:
 	$(CLEAN) regress regress.opt regress.run
