@@ -36,8 +36,9 @@ let regress_files =
 	  [
 		{def with t_name="config1"; t_atom=T_ip; t_descr=None; t_default=None};
 		{def with t_name="config2"; t_atom=T_ip; t_descr=None; t_default=None};
-		{def with t_name="config3"; t_atom=T_ip_list; t_descr=None; t_default=None};
+		{def with t_name="config3"; t_atom=T_ip_list; t_descr=None; t_default=Some (V_ip (Unix.inet_addr_of_string "5.6.7.7"))};
 		{def with t_name="config4"; t_atom=T_ip_list; t_descr=None; t_default=None};
+		{def with t_name="config5"; t_atom=T_ip_list; t_descr=None; t_default=None};
  	  ]
 	);
  
