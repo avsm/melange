@@ -91,7 +91,7 @@ let default_config_getopt_key = "default-config"
 let helpopt_of_var_tys vtys =
     let help_of_vty vty =
         let opt_string = match vty.t_short,vty.t_long with
-        |None,None -> failwith "Invalid config string"
+        |None,None -> sprintf "(config file only)" 
         |Some c, None -> sprintf "-%c" c
         |Some c, Some s -> sprintf "--%s (-%c)" s c
         |None, Some s -> sprintf "--%s" s in
