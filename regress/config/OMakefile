@@ -1,0 +1,22 @@
+.PHONY: run-regress clean
+
+OCAMLINCLUDES[] +=
+    $(MPL_DIR)
+    $(DIST_DIR)/getopt
+    $(LIB_DIR)/config
+
+OCAML_LIBS[] += 
+    $(DIST_DIR)/getopt/getopt
+    $(LIB_DIR)/config/config
+
+OCAML_OTHER_LIBS[] +=
+    unix
+    str
+
+PROGRAM = $(OCamlProgram regress, regress)
+
+run-regress: $(PROGRAM)
+	./regress
+
+clean:
+	$(CLEAN) regress regress.opt regress.run

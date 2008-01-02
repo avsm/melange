@@ -74,5 +74,5 @@ VERBOSE = true
 #
 # Include the OMakefile in this directory.
 #
-.SUBDIRS: . tools dist lib apps
+.SUBDIRS: . tools dist lib apps regress
 
