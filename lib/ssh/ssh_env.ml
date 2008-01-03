@@ -107,7 +107,7 @@ class virtual env (conf:Ssh_env_t.t) =
     method private other_version = other_version
     
     (* Accepts a decrypted environment and provides an OCaml structure for it *)
-    method virtual decode_packet : Mpl_stdlib.env -> Ssh_classify.t
+    method virtual decode_packet : int32 -> Mpl_stdlib.env -> Ssh_classify.t
 
     (* Constructs a closure for the KexInit packet depending on configuration *)
     method private kexinit =
@@ -143,11 +143,11 @@ class virtual env (conf:Ssh_env_t.t) =
             ~decryptfn:transport.decryptfn
             ~macfn:transport.decrypt_macfn
             conf.fd in
-        let decoded = self#decode_packet penv in
+        let decoded = self#decode_packet !rx_seq_num penv in
         let _ = match Ssh_classify.recv_statecall decoded with
         |None -> ()
             (* route incoming statecall to correct channel *)
-        |Some sc -> self#tick_automaton sc in
+        |Some sc -> self#tick_automaton sc in 
         decoded
         
     (* Transmit an SSH packet *)
@@ -175,22 +175,23 @@ class virtual env (conf:Ssh_env_t.t) =
         try
             match self#recv with
             |C.DHGexSHA1 x ->
-                (* DEBUG_CMD(Ssh_message.Dhgexsha1.prettyprint x); *)
+                Ssh_message.Dhgexsha1.prettyprint x;
                 self#dispatch_dhgexsha1_packet x
             |C.DHGroupSHA1 x ->
-                (* DEBUG_CMD(Ssh_message.Dhgroupsha1.prettyprint x); *)
+                Ssh_message.Dhgroupsha1.prettyprint x;
                 self#dispatch_dhg1sha1_packet x
             |C.Transport x ->
-                (* DEBUG_CMD(Ssh_message.Transport.prettyprint x); *)
+                Ssh_message.Transport.prettyprint x;
                 self#dispatch_transport_packet x
             |C.Auth x ->
-                (* DEBUG_CMD(Ssh_message.Auth.prettyprint x); *)
+                Ssh_message.Auth.prettyprint x;
                 self#dispatch_auth_packet x
             |C.Channel x ->
-                (* DEBUG_CMD(Ssh_message.Channel.prettyprint x); *)
+                Ssh_message.Channel.prettyprint x;
                 self#dispatch_channel_packet x
-            |C.Unknown ->
-                failwith "unknown packet" (* XXX dont die here, xmit Unimplemented *)
+            |C.Unknown x ->
+				log#debug "Unknown packet, sending unimplemented";
+				self#dispatch_unimplemented_packet x
         with
             |Disconnect_connection (code,reason) ->
                 self#xmit (Ssh_message.Transport.Disconnect.t
@@ -206,6 +207,9 @@ class virtual env (conf:Ssh_env_t.t) =
     method virtual dispatch_transport_packet : Ssh_message.Transport.o -> unit
     method virtual dispatch_auth_packet : Ssh_message.Auth.o -> unit
     method virtual dispatch_channel_packet : Ssh_message.Channel.o -> unit
+
+    method dispatch_unimplemented_packet seq =
+        self#xmit (Ssh_message.Transport.Unimplemented.t ~seq_num:seq :> xmit_t)
 
     (* Convenience functions for terminating a connection *)
     method disconnect ?(reason="") code =
@@ -240,15 +244,13 @@ class virtual env (conf:Ssh_env_t.t) =
         let server_to_client_key = derivefn key_size_sc 'D' in
         let integrity_client_to_server = derivefn mac_len_cs 'E' in
         let integrity_server_to_client = derivefn mac_len_sc 'F' in
-        (*
         let hob = Ssh_utils.hex_of_binary in
-        DEBUG ("c->s iv   (A): " ^ (hob client_to_server_iv));
-        DEBUG ("s->c iv   (B): " ^ (hob server_to_client_iv));
-        DEBUG ("c->s key  (C): " ^ (hob client_to_server_key));
-        DEBUG ("s->c key  (D): " ^ (hob server_to_client_key));
-        DEBUG ("c->s hash (E): " ^ (hob integrity_client_to_server));
-        DEBUG ("s->c hash (F): " ^ (hob integrity_server_to_client));
-        *)
+        log#debug ("c->s iv   (A): " ^ (hob client_to_server_iv));
+        log#debug ("s->c iv   (B): " ^ (hob server_to_client_iv));
+        log#debug ("c->s key  (C): " ^ (hob client_to_server_key));
+        log#debug ("s->c key  (D): " ^ (hob server_to_client_key));
+        log#debug ("c->s hash (E): " ^ (hob integrity_client_to_server));
+        log#debug ("s->c hash (F): " ^ (hob integrity_server_to_client));
         (* Layering violation here, but just putting this logic here saves
          * passing a load of variables between the derived client/server classes *)
         let module AC = Ssh_algorithms.Cipher in

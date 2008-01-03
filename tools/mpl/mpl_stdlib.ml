@@ -422,7 +422,8 @@ module Mpl_raw = struct
 end
 
 let dump_env env =
-   prerr_endline (Mpl_raw.prettyprint (String.sub env.__bbuf 0 !(env.__blen)))
+   prerr_endline (Printf.sprintf "sz=%d pos=%d" env.__bsz env.__bpos);
+   prerr_endline (Mpl_raw.prettyprint (String.sub env.__bbuf 0 (!(env.__blen)+100)))
 
 exception Bad_dns_label
 

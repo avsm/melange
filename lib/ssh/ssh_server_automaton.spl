@@ -7,7 +7,8 @@ automaton transport (bool encrypted, bool serv_auth)
 {
     during {
         always_allow (Transmit_Transport_Debug, Receive_Transport_Debug,
-                      Transmit_Transport_Ignore, Receive_Transport_Ignore) {
+                      Transmit_Transport_Ignore, Receive_Transport_Ignore,
+		      Transmit_Transmit_Unimplemented, Receive_Transport_Unimplemented) {
             multiple {
                 either {
                     either {
@@ -52,8 +53,6 @@ automaton transport (bool encrypted, bool serv_auth)
                 Transmit_Transport_Disconnect;
                 exit;
             }
-        } or {
-	    Receive_Transport_Unimplemented;
         }
     }
 }

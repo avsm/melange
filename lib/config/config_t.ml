@@ -44,7 +44,7 @@ type val_atom =
     |V_boolean of bool
     |V_variant of string
     |V_variant_list of string list
-	|V_empty_list
+    |V_empty_list
 
 (** Record describing a configuration field *)
 type var_type = {
@@ -62,7 +62,7 @@ type var_val = {
     v_name: string;
     v_ty: var_type;
     v_val: val_atom;
-	v_loc: Config_location.t;
+    v_loc: Config_location.t;
 }
 
 type var_vals = var_val list
@@ -102,7 +102,7 @@ let rec string_of_val_atom =
     |V_boolean x -> sprintf "%B" x
     |V_variant v -> v
     |V_variant_list xl -> string_of_list (fun x -> V_variant x) xl
-	|V_empty_list -> "[]"
+    |V_empty_list -> "[]"
 
 (** Convert a var_type to a human-readable string *)
 let string_of_var_type vty =
@@ -134,33 +134,33 @@ let valid_type x =
     |T_ip_list, (V_string_list _)
     |(T_variant _),(V_variant _)
     |(T_variant_list _),(V_variant_list _)
-	|(T_int_list _), V_empty_list
-	|T_string_list, V_empty_list
-	|(T_variant_list _), V_empty_list
-	|T_ip_list, V_empty_list
+    |(T_int_list _), V_empty_list
+    |T_string_list, V_empty_list
+    |(T_variant_list _), V_empty_list
+    |T_ip_list, V_empty_list
         -> true
     |_ -> false
 
 let check_int_range loc a b v =
-	if v < a || v > b then raise (Type_error (loc,
-		(sprintf "Integer out of range: expected %d-%d, got %d" a b v)))
+    if v < a || v > b then raise (Type_error (loc,
+        (sprintf "Integer out of range: expected %d-%d, got %d" a b v)))
 
 let check_variants loc is vs =
-	List.iter (fun v -> if not (List.mem v is) then raise (Type_error (loc,
-		(sprintf "Unknown variant '%s', expected (%s)" v (String.concat "|" is))))) vs
-	
+    List.iter (fun v -> if not (List.mem v is) then raise (Type_error (loc,
+        (sprintf "Unknown variant '%s', expected (%s)" v (String.concat "|" is))))) vs
+    
 let resolve_type (ty:var_types) (v:var_val) =
-	let id = v.v_name in
-	let conf_ty = try List.find (fun t -> t.t_name = id) ty with Not_found ->
-		raise (Type_error (v.v_loc, (sprintf "Unknown variable '%s'" id)))
-	in
-	let v = {v with v_ty=conf_ty} in
-	let t_atom = v.v_ty.t_atom in
-	(* is the type the type we actually want? *)
-	if not (valid_type v) then 
-	    raise (Type_error (v.v_loc, (sprintf "%s: Expected %s, found %s"
-	        id (string_of_type_atom t_atom)(string_of_val_atom v.v_val))));
-	match t_atom,v.v_val with
+    let id = v.v_name in
+    let conf_ty = try List.find (fun t -> t.t_name = id) ty with Not_found ->
+        raise (Type_error (v.v_loc, (sprintf "Unknown variable '%s'" id)))
+    in
+    let v = {v with v_ty=conf_ty} in
+    let t_atom = v.v_ty.t_atom in
+    (* is the type the type we actually want? *)
+    if not (valid_type v) then 
+        raise (Type_error (v.v_loc, (sprintf "%s: Expected %s, found %s"
+            id (string_of_type_atom t_atom)(string_of_val_atom v.v_val))));
+    match t_atom,v.v_val with
     |T_int (a,b), (V_int i) -> check_int_range v.v_loc a b i; v
     |T_int (a,b), (V_int_list il) -> List.iter (check_int_range v.v_loc a b) il; v
     |T_variant t, (V_variant x) -> check_variants v.v_loc t [x]; v
@@ -168,11 +168,11 @@ let resolve_type (ty:var_types) (v:var_val) =
     |T_ip, (V_string x) -> {v with v_val=V_ip (Unix.inet_addr_of_string x)}
     |T_ip_list, (V_string_list x) -> {v with v_val=V_ip_list
         (List.map Unix.inet_addr_of_string x)}
-	|T_int_list _, V_empty_list -> {v with v_val=(V_int_list [])}
-	|T_string_list, V_empty_list -> {v with v_val=(V_string_list [])}
-	|T_variant_list _, V_empty_list -> {v with v_val=(V_variant_list [])}
-	|T_ip_list, V_empty_list -> {v with v_val=(V_ip_list [])}
-	|_,_ -> v
+    |T_int_list _, V_empty_list -> {v with v_val=(V_int_list [])}
+    |T_string_list, V_empty_list -> {v with v_val=(V_string_list [])}
+    |T_variant_list _, V_empty_list -> {v with v_val=(V_variant_list [])}
+    |T_ip_list, V_empty_list -> {v with v_val=(V_ip_list [])}
+    |_,_ -> v
 
 (** Parse a getopt command line string to a var_atom *) 
 let cmd_string_to_val_atom str vty =
@@ -197,11 +197,11 @@ let getopt_of_var_ty add_config_fn vty =
     let shortval = match vty.t_short with |None -> Getopt.noshort |Some c -> c in
     let longval = match vty.t_long with |None -> Getopt.nolong |Some s -> s in
     let action = None in (* No default actions yet *)
-	let handler = Some (fun str ->
-		add_config_fn vty (cmd_string_to_val_atom str vty)
-	) in
+    let handler = Some (fun str ->
+        add_config_fn vty (cmd_string_to_val_atom str vty)
+    ) in
     (shortval, longval, action, handler)
    
 (** Given a type specification, fill in the value types *)
 let rec type_check ty (vals:var_vals) =
-	List.map (resolve_type ty) vals
+    List.map (resolve_type ty) vals

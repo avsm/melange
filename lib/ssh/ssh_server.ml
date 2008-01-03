@@ -92,7 +92,7 @@ class env conf server_conf = object(self)
         end
         
     (* Decode and classify an SSH packet *)
-    method decode_packet env =
+    method decode_packet rx_seq_num env =
         let module M = Ssh_message in
         let module MC = Ssh_classify in
         match MC.peek env with
@@ -105,7 +105,7 @@ class env conf server_conf = object(self)
             |Negotiation_DHG14SHA1 _ -> MC.DHGroupSHA1 (M.Dhgroupsha1.unmarshal env)
             |Negotiation_DHGexSHA1_Request _
             |Negotiation_DHGexSHA1_Init _ -> MC.DHGexSHA1 (M.Dhgexsha1.unmarshal env)
-            |_ -> raise (Ssh_env.Unexpected_packet "kex decode_packet")
+            |_ -> MC.Unknown rx_seq_num
         end
         | MC.UserAuthGeneric
         | MC.UserAuthSpecific ->
@@ -116,7 +116,7 @@ class env conf server_conf = object(self)
             (* XXX expecting_port must be set correctly *)
             MC.Channel (M.Channel.unmarshal ~expecting_port:false env)
         | MC.Reserved
-        | MC.LocalExtensions -> raise MC.Unknown_packet
+        | MC.LocalExtensions -> MC.Unknown rx_seq_num
 
     method set_new_keys neg_state sess_hash shared_secret =
         let conn = self#derive_session_keys neg_state sess_hash shared_secret true in
@@ -151,12 +151,15 @@ class env conf server_conf = object(self)
             } in
             match s_kex with
             |Ssh_kex.Methods.DiffieHellmanGroup1SHA1 ->
+                log#debug "Kexinit: Expect DHInit";
                 self#tick_automaton `Expect_DHInit;
                 transport_state <- Negotiation_DHG1SHA1 next_args
             |Ssh_kex.Methods.DiffieHellmanGroup14SHA1 ->
+                log#debug "Kexinit: Expect DHInit Gex14";
                 self#tick_automaton `Expect_DHInit;
                 transport_state <- Negotiation_DHG14SHA1 next_args
             |Ssh_kex.Methods.DiffieHellmanGexSHA1 ->
+                log#debug "Kexinit: Expect GexSHA1";
                 self#tick_automaton `Expect_GexInit;
                 transport_state <- Negotiation_DHGexSHA1_Request next_args
         end
