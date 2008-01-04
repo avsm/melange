@@ -7,7 +7,30 @@ static. =
 	PTY_CFLAGS[] = $(if $(PTY_H_AVAILABLE), -DHAVE_PTY_H. $(EMPTY_ARRAY))
 	PTY_CFLAGS[] += $(if $(UTIL_H_AVAILABLE), -DHAVE_UTIL_H, $(EMPTY_ARRAY))
 	PTY_OCAML_LIB_FLAGS = $(if $(UTIL_LIB_AVAILABLE), -cclib -lutil, $(EMPTY))
+	ConfMsgChecking(for a sane termios.h)
+	SANE_TERMIOS_AVAILABLE = $(TryCompileC $""
+#include <stdio.h>
+#include <errno.h>
+#include <paths.h>
+#include <fcntl.h>
+#include <string.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+
+int main(int argc, const char **argv) {
+   int fd = 0;
+   ioctl(fd, TIOCNOTTY, NULL);
+   ioctl(fd, TIOCSCTTY, NULL);
+   ioctl(fd, TIOCSWINSZ, NULL);
+}
+"")
+	if $(not $(SANE_TERMIOS_AVAILABLE))
+		ConfMsgResult($"FAILED")
 	export
+
+if $(not $(SANE_TERMIOS_AVAILABLE))
+	eprintln($"The termios.h on this system appears to lack some defines. Melange will not build on this system.")
+	exit(1)
 
 .PHONY: clean
 
