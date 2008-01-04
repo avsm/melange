@@ -92,4 +92,3 @@ VERBOSE = true
 # Include the OMakefile in this directory.
 #
 .SUBDIRS: lib apps regress
-

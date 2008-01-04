@@ -24,8 +24,7 @@ int main(int argc, const char **argv) {
    ioctl(fd, TIOCSWINSZ, NULL);
 }
 "")
-	if $(not $(SANE_TERMIOS_AVAILABLE))
-		ConfMsgResult($"FAILED")
+	ConfMsgFound($(SANE_TERMIOS_AVAILABLE))
 	export
 
 if $(not $(SANE_TERMIOS_AVAILABLE))
