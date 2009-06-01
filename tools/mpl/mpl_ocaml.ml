@@ -580,200 +580,205 @@ let print_struct env e l =
             ss := szs :: !ss;
             es := ess :: !es;
         ) l;
-        e.p "type o = [";
-        List.iter e.p !ts;
-        e.p "]";
+        let print_var_list x = List.iter (fun a -> e += "%s" $ a) !x in
+        e += "type o = [";
+        print_var_list ts;
+        e +=  "]";
         e.nl ();
-        e.p "type x = [";
-        List.iter e.p !varl;
-        e.p "]";
+        e += "type x = [";
+        print_var_list varl;
+        e += "]";
         e.nl();
-        e.p "let m (x:x) env : o = match x with";
-        List.iter e.p !varm;
+        e += "let m (x:x) env : o = match x with";
+        print_var_list varm;
         e.nl ();
-        e.p "let prettyprint (x:o) = match x with";
-        List.iter e.p !ps;
+        e += "let prettyprint (x:o) = match x with";
+        print_var_list ps;
         e.nl ();
-        e.p "let sizeof (x:o) = match x with";
-        List.iter e.p !ss;
+        e += "let sizeof (x:o) = match x with";
+        print_var_list ss;
         e.nl ();
-        e.p "let env (x:o) = match x with";
-        List.iter e.p !es;
+        e += "let env (x:o) = match x with";
+        print_var_list es;
         e.nl ();
         if env.wantsc then begin
-        e.p "let recv_statecall (x:o) = match x with";
-        List.iter e.p !xxa;
-        e.nl ();
+          e += "let recv_statecall (x:o) = match x with";
+          print_var_list xxa;
+          e.nl ();
         end
-    |V.S_unit :: r -> fn env e m r
+    |V.S_unit :: r -> 
+        fn env e m r
     |[] ->
         let fvars = get_free_vars env in
-        e.p ("class o");
-        indent_fn e (fun e -> 
-           List.iter (function
+        e += "class o";
+        e --> (fun e ->
+          List.iter (function
             |`Free (id,szo,V.Array (_,V.UInt V.I8,_))
             |`Bound (id,szo,V.Array (_,V.UInt V.I8,_)) ->
-               if not (must E.is_const szo) then 
-                  e.p (sprintf "~(%s_length:int)" id)
+              if not (must E.is_const szo) then 
+                e += "~(%s_length:int)" $ id
             |`Free (id,szo,V.Packet (p,_)) ->
-               e.p (sprintf "~(%s:%s.%s.o)" id p p);
+              e += "~(%s:%s.%s.o)" $ id $ p $ p;
             |`Free (id,szo,V.Class cid) ->
-               e.p (sprintf "~(%s:%s array)" id (objname ~sub:env.mods cid));
-               e.p (sprintf "(* mods:[%s], instr:%b *)" (String.concat "," (List.rev env.mods)) false);
+              e += "~(%s:%s array)" $ id $ (objname ~sub:env.mods cid);
+              e += "(* mods:[%s], instr:false *)" $ (String.concat "," (List.rev env.mods));
             |`Bound (id,szo,vty) ->
-               if is_custom_type vty && not (custom_is_const_size vty) then e.p (sprintf "~%s" id);
+              if is_custom_type vty && not (custom_is_const_size vty) then
+                e += "~%s" $ id;
             |`Free (id,szo,vty) ->
-               if is_custom_type vty then e.p (sprintf "~%s" id);
+              if is_custom_type vty then 
+                e += "~%s" $ id;
             |_ -> ()
-           ) fvars;
-            e.p "(env:env) =";
-            e.p "object(self)";
-            indent_fn e (fun e ->
-                let all_szs = List.fold_right (fun b a -> match b with
-                  |`Free (id,szo,V.Label)
-                  |`Bound (id,szo,V.Label)
-                  |`Free (id,szo,V.Value ("bit",_,_))
-                  |`Bound (id,szo,V.Value ("bit",_,_)) ->
-                     a
-                  |`Free (id,szo,vty)
-                  |`Bound (id,szo,vty) ->
-                     ocaml_size_of_ty env id szo vty :: a
-                   ) fvars [] in
-                e.p (sprintf "method env = env_at env 0 self#sizeof");
-                e.p (sprintf "method sizeof = %s" (foldfn1 ~sub:env.mods ~vpref:"self#" all_szs));
-                let scn = String.concat "_" (List.rev_map String.capitalize (env.mods@[env.pname])) in
-                if not env.inarr && env.wantsc then begin
-                    e.p (sprintf "method xmit_statecall : [ `Transmit_%s] = `Transmit_%s" scn scn);
-                end;
-                let szs = ref [] in
-                let szshash = Hashtbl.create 1 in
-                let extramthds = ref [] in
-                List.iter (fun vl ->
-                    let _ = match vl with
-                    |`Bound (id,szo,V.Label) ->
-                        e.p (sprintf "method %s = %s" id (foldfn1 ~sub:env.mods ~vpref:"self#" !szs));
-                    |`Bound (_,_,V.Value (_,_,{V.av_bitdummy=true})) -> ()
-                    |`Bound (id,szo,v) -> ()
-                    |`Free (id,szo,v) -> begin
-                        e.p (sprintf "method %s =" id);
-                        indent_fn e (fun e ->
-                            let foldfn = foldfn1 ~sub:env.mods ~vpref:"self#" in
-                            let sizeat id = foldfn (Hashtbl.find szshash id) in
-                           let off = sprintf "(%s)" (foldfn !szs) in
-                           let prfn x = e.p (match v with V.Value (_,_,{V.av_variant=Some _}) -> sprintf "let %s = %s in" id x |_ -> x) in
-                           let _ = match v with
-                           |V.Value ("bit",V.UInt V.I8,at) ->
-                              let bvars = find_bit_vars env id in
-                                let depvars = List.map (fun (a,_) -> a) (B.bitdeps bvars at.V.av_bitops) in
-                              List.iter (fun id ->
-                                 e.p (sprintf "let %s = Mpl_byte.to_int (Mpl_byte.at env (%s)) in" id (sizeat id));
-                              ) depvars;
-                              prfn (sprintf "%s" (B.to_expr depvars at.V.av_bitops))
-                           |V.Value ("byte",V.UInt V.I8,_) ->
-                              prfn (sprintf "Mpl_byte.to_int (Mpl_byte.at env %s)" off);
-                           |V.Value (_,V.UInt V.I16,_) ->
-                              prfn(sprintf "Mpl_uint16.to_int (Mpl_uint16.at env %s)" off);
-                           |V.Value (_,V.UInt V.I32,_) ->
-                              prfn (sprintf "Mpl_uint32.to_int32 (Mpl_uint32.at env %s)" off);
-                           |V.Value (_,V.UInt V.I64,_) ->
-                              prfn (sprintf "Mpl_uint64.to_int64 (Mpl_uint64.at env %s)" off);
-                           |V.Array (_,V.UInt V.I8,_) ->
-                              let ssz = (if must E.is_const szo then
-                                 sprintf "%d" (must E.to_const_int szo) else sprintf "%s_length" id) in
-                              prfn (sprintf "Mpl_raw.at env %s %s" off ssz);
-                              let envmt = (sprintf "%s_env : env" id),(sprintf "env_at env %s %s" off ssz) in
-                              let envmt2 = (sprintf "%s_frag" id),(sprintf "Mpl_raw.frag env %s %s" off ssz) in
-                              let envmt3 = (sprintf "%s_length" id),ssz in
-                              extramthds := envmt :: envmt2 :: envmt3 :: !extramthds;
-                           |V.Class _ ->
-                                prfn id
-                           |V.Packet _ -> e.p id
-                           |x ->
-                              e.p (custom_type_to_native id x)
-                           in
-                           let _ = match v with
-                           |V.Value (_,_,{V.av_variant=Some l}) ->
-                              e.p (sprintf "%s_unmarshal %s" id id)
-                           |_ -> () in
-                           ()
-                        );
-                        let foldfn = foldfn1 ~sub:env.mods ~vpref:"self#" in
-                        let off = sprintf "(%s)" (foldfn !szs) in
-                        let prfn x =
-                            e.p (sprintf "method set_%s v : unit =" id);
-                            indent_fn e (fun e -> e.p x) in
-                        let unsup x =
-                           e.p (sprintf "(* set_%s unsupported for now (type %s) *)" id x) in                         
-                        let _ = match v with
-                        |V.Value ("bit",V.UInt V.I8,at) ->
-                           unsup "bit";
-                        |V.Value ("byte",V.UInt V.I8,_) ->
-                            let tsz = foldfn [ocaml_size_of_ty env id szo v] in
-                           prfn (sprintf "Mpl_byte.marshal (env_at env %s %s) (Mpl_byte.of_int v)" off tsz);
-                        |V.Value (_,V.UInt V.I16,_) ->
-                            let tsz = foldfn [ocaml_size_of_ty env id szo v] in
-                           prfn (sprintf "Mpl_uint16.marshal (env_at env %s %s) (Mpl_uint16.of_int v)" off tsz);
-                        |V.Value (_,V.UInt V.I32,_) ->
-                            let tsz = foldfn [ocaml_size_of_ty env id szo v] in
-                           prfn (sprintf "Mpl_uint32.marshal (env_at env %s %s) (Mpl_uint32.of_int32 v)" off tsz);
-                        |V.Value (_,V.UInt V.I64,_) ->
-                            let tsz = foldfn [ocaml_size_of_ty env id szo v] in
-                           prfn (sprintf "Mpl_uint64.marshal (env_at env %s %s) (Mpl_uint64.of_int64 v)" off tsz);
-                        |V.Array (_,V.UInt V.I8,_) ->
-                           unsup "byte array"; 
-                        |V.Class _ ->
-                           unsup "class";
-                        |x ->
-                           unsup "custom_type";
-                        in
-                        let _ = match v with
-                        |V.Value (_,_,{V.av_variant=Some l}) -> ()
-                        |_ -> () in
-                        ()
-                    end
-                    in
-                    List.iter (fun (nm,bd) -> e.p (sprintf "method %s = %s" nm bd)) !extramthds;
-                    extramthds := [];
-                    e.nl ();
-                    let _ = match vl with
-                    |`Free (id,szo,V.Value ("bit",(V.UInt V.I8),_))
-                    |`Bound (id,szo,V.Value ("bit",(V.UInt V.I8),_)) -> ()
-                    |`Bound (id,szo,v)
-                    |`Free (id,szo,v) ->
-                      let x = ocaml_size_of_ty env id szo v in
-                      Hashtbl.add szshash id (!szs);
-                      szs := x :: !szs;
-                    in ()
-                ) fvars;
-                e.nl ();
-                e.p "method prettyprint =";
-                indent_fn e (fun e ->
-                   e.p "let out = prerr_endline in";
-                   e.p (sprintf "out \"[ %s.%s ]\";" (String.capitalize env.pname) (String.concat "." (List.rev (env.pname::env.mods))));
-                   List.iter (function
-                     |`Bound (id,szo,v) ->
-                        e.p (sprintf "(* %s : bound *)" id);
-                     |`Free (id,szo,v) ->
-                        let vr = "self#" ^ id in
-                        let prfn x = e.p (sprintf "out (\"  %s = \" ^ (%s %s));" id x vr) in
-                        let _ = match v with
-                        |V.Value (_,_,{V.av_variant=Some _}) -> prfn (sprintf "%s_to_string" id)
-                        |V.Value (_,V.UInt V.I8,_)
-                        |V.Value (_,V.UInt V.I16,_) -> prfn "Printf.sprintf \"%u\""
-                        |V.Value (_,V.UInt V.I32,_) -> prfn "Printf.sprintf \"%lu\""
-                        |V.Value (_,V.UInt V.I64,_) -> prfn "Printf.sprintf \"%Lu\""
-                        |V.Array (_,V.UInt V.I8,_) -> prfn "Mpl_raw.prettyprint"
-                        |V.Class cid -> e.p (sprintf "out (\"  %s = array\");" id);
-                           e.p (sprintf "Array.iter %s.prettyprint %s;" (modname ~sub:env.mods cid) id);
-                        |V.Packet (p,_) -> e.p (sprintf "out (\" %s = packet(%s)\");" id p);
-                           e.p (sprintf "%s.%s.prettyprint %s;" p p id);
-                        |x -> prfn (custom_type_prettyprint id x);
-                        in ()
-                   ) fvars;
-                   e.p "()";
+          ) fvars;
+          e += "(env:env) =";
+          e += "object(self)";
+          e --> (fun e ->
+            let all_szs = List.fold_right (fun b a -> match b with
+              |`Free (id,szo,V.Label)
+              |`Bound (id,szo,V.Label)
+              |`Free (id,szo,V.Value ("bit",_,_))
+              |`Bound (id,szo,V.Value ("bit",_,_)) ->
+                a
+              |`Free (id,szo,vty)
+              |`Bound (id,szo,vty) ->
+                ocaml_size_of_ty env id szo vty :: a
+              ) fvars [] in
+            e += "method env = env_at env 0 self#sizeof";
+            e += "method sizeof = %s" $ (foldfn1 ~sub:env.mods ~vpref:"self#" all_szs);
+            let scn = String.concat "_" (List.rev_map String.capitalize (env.mods@[env.pname])) in
+            if not env.inarr && env.wantsc then
+              e += "method xmit_statecall : [ `Transmit_%s] = `Transmit_%s" $ scn $ scn;
+            let szs = ref [] in
+            let szshash = Hashtbl.create 1 in
+            let extramthds = ref [] in
+            List.iter (fun vl ->
+              let _ = match vl with
+              |`Bound (id,szo,V.Label) ->
+                e += "method %s = %s" $ id $ (foldfn1 ~sub:env.mods ~vpref:"self#" !szs);
+              |`Bound (_,_,V.Value (_,_,{V.av_bitdummy=true})) -> ()
+              |`Bound (id,szo,v) -> ()
+              |`Free (id,szo,v) -> begin
+                e += "method %s =" $ id;
+                e --> (fun e ->
+                  let foldfn = foldfn1 ~sub:env.mods ~vpref:"self#" in
+                  let sizeat id = foldfn (Hashtbl.find szshash id) in
+                  let off = sprintf "(%s)" (foldfn !szs) in
+                  let prfn x = match v with
+                    |V.Value (_,_,{V.av_variant=Some _}) -> e += "let %s = %s in" $ id $ x
+                    |_ -> e += "%s" $ x in
+                  let _ = match v with
+                  |V.Value ("bit",V.UInt V.I8,at) ->
+                    let bvars = find_bit_vars env id in
+                    let depvars = List.map (fun (a,_) -> a) (B.bitdeps bvars at.V.av_bitops) in
+                    List.iter (fun id ->
+                      e += "let %s = Mpl_byte.to_int (Mpl_byte.at env (%s)) in" $ id $ (sizeat id);
+                    ) depvars;
+                    prfn (B.to_expr depvars at.V.av_bitops);
+                  |V.Value ("byte",V.UInt V.I8,_) ->
+                    prfn (sprintf "Mpl_byte.to_int (Mpl_byte.at env %s)" off);
+                  |V.Value (_,V.UInt V.I16,_) ->
+                    prfn(sprintf "Mpl_uint16.to_int (Mpl_uint16.at env %s)" off);
+                  |V.Value (_,V.UInt V.I32,_) ->
+                    prfn (sprintf "Mpl_uint32.to_int32 (Mpl_uint32.at env %s)" off);
+                  |V.Value (_,V.UInt V.I64,_) ->
+                    prfn (sprintf "Mpl_uint64.to_int64 (Mpl_uint64.at env %s)" off);
+                  |V.Array (_,V.UInt V.I8,_) ->
+                    let ssz = (if must E.is_const szo then
+                      sprintf "%d" (must E.to_const_int szo) else sprintf "%s_length" id) in
+                    prfn (sprintf "Mpl_raw.at env %s %s" off ssz);
+                    let envmt = (sprintf "%s_env : env" id),(sprintf "env_at env %s %s" off ssz) in
+                    let envmt2 = (sprintf "%s_frag" id),(sprintf "Mpl_raw.frag env %s %s" off ssz) in
+                    let envmt3 = (sprintf "%s_length" id),ssz in
+                    extramthds := envmt :: envmt2 :: envmt3 :: !extramthds;
+                  |V.Class _ ->
+                    prfn id
+                  |V.Packet _ ->
+                    e += "%s" $ id
+                  |x ->
+                    e += "%s" $ (custom_type_to_native id x)
+                  in
+                  let _ = match v with
+                  |V.Value (_,_,{V.av_variant=Some l}) ->
+                    e += "%s_unmarshal %s" $ id $ id;
+                  |_ -> () in
+                  ()
                 );
+                let foldfn = foldfn1 ~sub:env.mods ~vpref:"self#" in
+                let off = sprintf "(%s)" (foldfn !szs) in
+                let prfn x =
+                  e += "method set_%s v : unit =" $ id;
+                  e --> (fun e -> e += "%s" $ x) in
+                let unsup x =
+                  e += "(* set_%s unsupported for now (type %s) *)" $ id $ x in                         
+                match v with
+                |V.Value ("bit",V.UInt V.I8,at) ->
+                  unsup "bit";
+                |V.Value ("byte",V.UInt V.I8,_) ->
+                  let tsz = foldfn [ocaml_size_of_ty env id szo v] in
+                  prfn (sprintf "Mpl_byte.marshal (env_at env %s %s) (Mpl_byte.of_int v)" off tsz);
+                |V.Value (_,V.UInt V.I16,_) ->
+                  let tsz = foldfn [ocaml_size_of_ty env id szo v] in
+                  prfn (sprintf "Mpl_uint16.marshal (env_at env %s %s) (Mpl_uint16.of_int v)" off tsz);
+                |V.Value (_,V.UInt V.I32,_) ->
+                  let tsz = foldfn [ocaml_size_of_ty env id szo v] in
+                  prfn (sprintf "Mpl_uint32.marshal (env_at env %s %s) (Mpl_uint32.of_int32 v)" off tsz);
+                |V.Value (_,V.UInt V.I64,_) ->
+                  let tsz = foldfn [ocaml_size_of_ty env id szo v] in
+                  prfn (sprintf "Mpl_uint64.marshal (env_at env %s %s) (Mpl_uint64.of_int64 v)" off tsz);
+                |V.Array (_,V.UInt V.I8,_) ->
+                  unsup "byte array"; 
+                |V.Class _ ->
+                  unsup "class";
+                |x ->
+                  unsup "custom_type";
+              end in
+              List.iter (fun (nm,bd) ->
+                e += "method %s = %s" $ nm $ bd
+              ) !extramthds;
+              extramthds := [];
+              e.nl ();
+              let _ = match vl with
+              |`Free (id,szo,V.Value ("bit",(V.UInt V.I8),_))
+              |`Bound (id,szo,V.Value ("bit",(V.UInt V.I8),_)) -> ()
+              |`Bound (id,szo,v)
+              |`Free (id,szo,v) ->
+                let x = ocaml_size_of_ty env id szo v in
+                Hashtbl.add szshash id (!szs);
+                szs := x :: !szs;
+              in ()
+            ) fvars;
+            e.nl ();
+            e.p "method prettyprint =";
+            e --> (fun e ->
+              e += "let out = prerr_endline in";
+              e += "out \"[ %s.%s ]\";" $ (String.capitalize env.pname) $ (String.concat "." (List.rev (env.pname::env.mods)));
+              List.iter (function
+              |`Bound (id,szo,v) ->
+                e += "(* %s : bound *)" $ id;
+              |`Free (id,szo,v) ->
+                let vr = "self#" ^ id in
+                let prfn x =
+                  e += "out (\"  %s = \" ^ (%s %s));" $ id $ x $ vr in
+                let _ = match v with
+                |V.Value (_,_,{V.av_variant=Some _}) -> prfn (sprintf "%s_to_string" id)
+                |V.Value (_,V.UInt V.I8,_)
+                |V.Value (_,V.UInt V.I16,_) -> prfn "Printf.sprintf \"%u\""
+                |V.Value (_,V.UInt V.I32,_) -> prfn "Printf.sprintf \"%lu\""
+                |V.Value (_,V.UInt V.I64,_) -> prfn "Printf.sprintf \"%Lu\""
+                |V.Array (_,V.UInt V.I8,_) -> prfn "Mpl_raw.prettyprint"
+                |V.Class cid -> 
+                  e += "out (\"  %s = array\");" $ id;
+                  e += "Array.iter %s.prettyprint %s;" $ (modname ~sub:env.mods cid) $ id;
+                |V.Packet (p,_) -> 
+                  e += "out (\" %s = packet(%s)\");" $ id $ p;
+                  e += "%s.%s.prettyprint %s;" $ p $ p $ id;
+                |x -> prfn (custom_type_prettyprint id x);
+                in ()
+              ) fvars;
+              e += "()";
             );
-            e.p "end";
+          );
+          e += "end";
         );
         e.nl ();
         e.p ("let t");
