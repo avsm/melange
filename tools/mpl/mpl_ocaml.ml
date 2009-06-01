@@ -404,115 +404,116 @@ let print_variant_types env e l =
     ) (get_variant_types env l)
 
 let print_unmarshal env e l =
-    e.p "let unmarshal ";
-    list_iter_indent e (fun e (id,ty) ->
-        e.p (sprintf "~(%s:%s)" id "bool")
-    ) env.statevars;
-    indent_fn e (fun e ->
-         e.p "(env:env) : o =";
-        let rec fn envstr dum env e = function
-        |V.S_var (id,szo,ty) :: r -> begin
-            let env = var_bind_env env id szo ty in
-            let prfn x = e.p (sprintf "let %s = %s in" id x) in
-            let dum = match ty with
-            |V.Value (_,_,{V.av_bitdummy=true}) -> dum @ [id]
-            |_ -> dum in
-            let vvars = get_value_vars env r in
-            let _ =  match ty with
-            |V.Array (_,(V.UInt V.I8 as b),_) ->
-               let sz = must (fun x -> x) szo in
-               if not (E.is_const sz) then
-                  e.p (sprintf "let %s_length = %s in" id (ocaml_string_of_expr ~toint:true b env sz));
-            |_ -> () in
-            if List.mem id vvars then begin
-               let _ = match ty with
-               |V.Value ("bit",V.UInt V.I8,at) ->
-                  e.p (sprintf "let %s = %s in (* bitu *)" id (B.to_expr dum at.V.av_bitops));
-               |V.Value ("byte",V.UInt V.I8,at) ->
-                   prfn (sprintf "Mpl_byte.to_int (Mpl_byte.unmarshal env)");
-               |V.Value (_,V.UInt V.I8,_) -> interr "print_unmarshal"
-               |V.Value (_,V.UInt V.I16,_) -> prfn "Mpl_uint16.unmarshal env";
-               |V.Value (_,V.UInt V.I32,_) -> prfn "Mpl_uint32.unmarshal env";
-               |V.Value (_,V.UInt V.I64,_) -> prfn "Mpl_uint64.unmarshal env";
-               |V.Array (xt,(V.UInt V.I8 as b),_) ->
-                   let sz = must (fun x -> x) szo in
-                   prfn (sprintf "Mpl_raw.unmarshal env %s" (ocaml_string_of_expr ~toint:true b env sz));
-               |V.Label -> ()
-               |a -> prfn (custom_type_unmarshal a ^ " env")
-               in ()
+    e += "let unmarshal ";
+    e --> (fun e ->
+      List.iter (fun (id,_) ->
+        e += "~(%s:bool)" $ id
+      ) env.statevars;
+    );
+    e --> (fun e ->
+      e += "(env:env) : o =";
+      let rec fn envstr dum env e = function
+      |V.S_var (id,szo,ty) :: r -> begin
+        let env = var_bind_env env id szo ty in
+        let prfn x = e += "let %s = %s in" $ id $ x in
+        let dum = match ty with
+        |V.Value (_,_,{V.av_bitdummy=true}) -> dum @ [id]
+        |_ -> dum in
+        let vvars = get_value_vars env r in
+        let _ =  match ty with
+        |V.Array (_,(V.UInt V.I8 as b),_) ->
+          let sz = must (fun x -> x) szo in
+          if not (E.is_const sz) then
+            e += "let %s_length = %s in" $ id $ (ocaml_string_of_expr ~toint:true b env sz);
+        |_ -> () in
+        if List.mem id vvars then begin
+          match ty with
+          |V.Value ("bit",V.UInt V.I8,at) ->
+            e += "let %s = %s in (* bitu *)" $ id $ (B.to_expr dum at.V.av_bitops);
+          |V.Value ("byte",V.UInt V.I8,at) ->
+            prfn (sprintf "Mpl_byte.to_int (Mpl_byte.unmarshal env)");
+          |V.Value (_,V.UInt V.I8,_) -> interr "print_unmarshal"
+          |V.Value (_,V.UInt V.I16,_) -> prfn "Mpl_uint16.unmarshal env";
+          |V.Value (_,V.UInt V.I32,_) -> prfn "Mpl_uint32.unmarshal env";
+          |V.Value (_,V.UInt V.I64,_) -> prfn "Mpl_uint64.unmarshal env";
+          |V.Array (xt,(V.UInt V.I8 as b),_) ->
+            let sz = must (fun x -> x) szo in
+            prfn (sprintf "Mpl_raw.unmarshal env %s" (ocaml_string_of_expr ~toint:true b env sz));
+          |V.Label -> ()
+          |a -> prfn (custom_type_unmarshal a ^ " env")
+        end else begin
+          match ty with
+          |V.Value ("bit",V.UInt V.I8,at) -> ()
+          |V.Packet (p,args) ->
+            if List.length args > 0 then
+              failwith "propagating args across packets not yet supported, sorry!";
+            (* need to rebase the environment since this packet is foreign *)
+            e += "let ___%s___env = env_at env (curpos env) 0 in" $ id;
+            e += "let %s = %s.%s.unmarshal ___%s___env in" $ id $ p $ p $ id;
+            (* skip forward by the amount of  unmarshalling that happened *)
+            e += "skip env (curpos ___%s___env);" $ id;
+          |ty -> 
+            if is_custom_type ty then begin
+              e += "let %s = %s env in (* custom *)" $ id $ (custom_type_unmarshal ty);
             end else begin
-               let _ = match ty with
-               |V.Value ("bit",V.UInt V.I8,at) -> ()
-               |V.Packet (p,args) ->
-                   if List.length args > 0 then
-                      failwith "propagating args across packets not yet supported, sorry!";
-                   (* need to rebase the environment since this packet is foreign *)
-                   e.p (sprintf "let ___%s___env = env_at env (curpos env) 0 in" id);
-                   e.p (sprintf "let %s = %s.%s.unmarshal ___%s___env in" id p p id);
-                   (* skip forward by the amount of  unmarshalling that happened *)
-                   e.p (sprintf "skip env (curpos ___%s___env);" id);
-               |ty -> 
-                  if is_custom_type ty then begin
-                     e.p (sprintf "let %s = %s env in (* custom *)" id (custom_type_unmarshal ty));
-                  end else begin
-                     let size = ocaml_size_of_ty env id szo ty in
-                     let sst = foldfn1 [size] in
-                     e.p (sprintf "skip env %s; (* skipped %s *)" sst id);
-                  end;
-               in ()
+              let size = ocaml_size_of_ty env id szo ty in
+              let sst = foldfn1 [size] in
+              e += "skip env %s; (* skipped %s *)" $ sst $ id;
             end;
-            if Hashtbl.mem env.offsets id then begin
-                e.p (sprintf "let %s___offset = curpos env in" id);
-            end;
-            fn envstr dum env e r;
-        end
-        |V.S_class (id, idty, l) :: r ->
-            e.p (sprintf "match %s with" (ocaml_to_native env id));
-            List.iter (fun (ex,bid,gu,xs) ->
-                let env = class_bind_env env id bid ex in
-                let rstr = ref [] in
-                let rfn = fun a b ->
-                    let ui = "__gu" ^ id in
-                    rstr := sprintf "((%s >= %d) && (%s <= %d))" ui a ui b :: !rstr;
-                    ui
-                in
-                let mtch = ocaml_string_of_expr ~rfn:(Some rfn) idty env ex in
-                may (fun gu ->
-                  rstr := sprintf "(%s)" (ocaml_string_of_expr ~statevar:true V.Bool env gu) :: !rstr) gu;
-                let rstr = if List.length !rstr > 0 then sprintf " when %s" (String.concat " && " !rstr) else "" in
-                e.p (sprintf "|%s%s -> `%s (" mtch rstr (E.to_const_string bid));
-                indent_fn e (fun e -> fn envstr dum env e (xs @ r));
-                e.p ")";
-            ) l;
-            e.p (sprintf "|x -> raise (Bad_packet (Printf.sprintf \"%s: %s\" x))" (modname env.mods) (ocaml_native_print idty))
-        |V.S_array (id,sz,xs) :: r ->
-            let aenv = array_bind_env env id sz in
-            let nenv = {aenv with vars=[]; inarr=true; mods=id::env.mods} in
-            e.p (sprintf "let %s = Array.init %s (fun _ ->" id (ocaml_string_of_expr (V.UInt V.I16) env sz));
-            indent_fn e (fun e ->
-               e.p (sprintf "let __oldpos = curpos env in");
-               fn (sprintf "(env_at env __oldpos 0)") dum nenv e xs);
-            e.p ") in";
-            fn envstr dum aenv e r
-        |V.S_unit :: r->
-            fn envstr dum env e r
-        |[] ->
-            e.p (sprintf "new %s %s" (objname env.mods) envstr);
-            List.iter (function
+        end;
+        if Hashtbl.mem env.offsets id then
+          e += "let %s___offset = curpos env in" $ id;
+        fn envstr dum env e r;
+      end
+      |V.S_class (id, idty, l) :: r ->
+        e += "match %s with" $ (ocaml_to_native env id);
+        List.iter (fun (ex,bid,gu,xs) ->
+          let env = class_bind_env env id bid ex in
+          let rstr = ref [] in
+          let rfn a b = 
+            let ui = "__gu" ^ id in
+            rstr := sprintf "((%s >= %d) && (%s <= %d))" ui a ui b :: !rstr;
+            ui
+          in
+          let mtch = ocaml_string_of_expr ~rfn:(Some rfn) idty env ex in
+          may (fun gu ->
+            rstr := sprintf "(%s)" (ocaml_string_of_expr ~statevar:true V.Bool env gu) :: !rstr) gu;
+          let rstr = if List.length !rstr > 0 then sprintf " when %s" (String.concat " && " !rstr) else "" in
+          e += "|%s%s -> `%s (" $ mtch $ rstr $ (E.to_const_string bid);
+          e --> (fun e -> fn envstr dum env e (xs @ r));
+          e += ")";
+        ) l;
+        e += "|x -> raise (Bad_packet (Printf.sprintf \"%s: %s\" x))" $ (modname env.mods) $ (ocaml_native_print idty)
+      |V.S_array (id,sz,xs) :: r ->
+        let aenv = array_bind_env env id sz in
+        let nenv = {aenv with vars=[]; inarr=true; mods=id::env.mods} in
+        e += "let %s = Array.init %s (fun _ ->" $ id $ (ocaml_string_of_expr (V.UInt V.I16) env sz);
+        e --> (fun e ->
+          e += "let __oldpos = curpos env in";
+          fn (sprintf "(env_at env __oldpos 0)") dum nenv e xs);
+          e += ") in";
+          fn envstr dum aenv e r
+      |V.S_unit :: r->
+        fn envstr dum env e r
+      |[] ->
+        e += "new %s %s" $ (objname env.mods) $ envstr;
+        List.iter (function
             |`Free (id,szo,V.Array (_,V.UInt V.I8,_))
             |`Bound (id,szo,V.Array (_,V.UInt V.I8,_)) ->
                if not (must E.is_const szo) then 
-                  e.p (sprintf "~%s_length:%s_length" id id)
+                  e +=  "~%s_length:%s_length" $ id $ id
             |`Free (id,szo,V.Packet _)
             |`Free (id,szo,V.Class _) ->
-               e.p (sprintf "~%s:%s" id id);
+               e+= "~%s:%s" $ id $ id;
             |`Bound (id,szo,vty) ->
-               if is_custom_type vty && not (custom_is_const_size vty) then e.p (sprintf "~%s:%s" id id);
+               if is_custom_type vty && not (custom_is_const_size vty) then 
+                 e += "~%s:%s" $ id $ id
             |`Free (id,szo,vty) ->
-               if is_custom_type vty then e.p (sprintf "~%s:%s" id id);
+               if is_custom_type vty then 
+                 e += "~%s:%s" $ id $ id
             |_ -> ()
-            ) (get_free_vars env)
-        in fn "env" [] env e l
+        ) (get_free_vars env)
+    in fn "env" [] env e l
     )
 
 let print_struct env e l = 
