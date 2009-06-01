@@ -18,6 +18,7 @@
 
 open Printf
 open Mpl_utils
+open Printer_utils
 
 let default_log_level = Logger.Verbose
 

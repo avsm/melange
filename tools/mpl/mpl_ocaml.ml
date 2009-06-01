@@ -18,7 +18,7 @@
 
 open Printf
 open Mpl_utils
-open Printer
+open Printer_utils.Printer
 open Mpl_cfg
 
 module V = Mpl_typechk.Var
@@ -357,37 +357,49 @@ let foldfn1 ?(sub=[]) ?(vpref="") x =
 
 let print_variant_types env e l =
     List.iter (fun (id,v) ->
-        e.p (sprintf "type %s_t = [" id);
-        list_iter_indent e (fun e (ex,l) ->
-            e.p (sprintf "|`%s" l)) v.vt_b;
-        indent_fn e (fun e -> e.p (sprintf "|`Unknown of %s" (ocaml_native_ty v.vt_ty)));
-        e.p "]";
+        e += "type %s_t = [" $ id;
+        e --> (fun e ->
+          List.iter (fun (ex,l) ->
+            e += "|`%s" $ l
+          ) v.vt_b;
+          e += "|`Unknown of %s" $ (ocaml_native_ty v.vt_ty);
+        );
+        e += "]";
         e.nl ();
-        e.p (sprintf "let %s_marshal (a:%s_t) =" id id);
-        indent_fn e (fun e -> e.p "match a with");
-        list_iter_indent e (fun e (ex,l) ->
-            e.p (sprintf "|`%s -> %s" l (ocaml_string_of_expr v.vt_ty env ex))
-        ) v.vt_b;
-        indent_fn e (fun e -> e.p (sprintf "|`Unknown x -> x"));
+        e += "let %s_marshal (a:%s_t) =" $ id $ id;
+        e --> (fun e ->
+          e += "match a with";
+          List.iter (fun (ex,l) ->
+             e += "|`%s -> %s" $ l $ (ocaml_string_of_expr v.vt_ty env ex)
+          ) v.vt_b;
+          e += "|`Unknown x -> x"
+        );
         e.nl ();
-        e.p (sprintf "let %s_unmarshal a : %s_t =" id id);
-        indent_fn e (fun e -> e.p "match a with");
-        list_iter_indent e (fun e (ex,l) ->
-            e.p (sprintf "|%s -> `%s" (ocaml_string_of_expr v.vt_ty env ex) l)) v.vt_b;
-        indent_fn e (fun e ->
-            e.p "|x -> `Unknown x");
+        e += "let %s_unmarshal a : %s_t =" $ id $ id;
+        e --> (fun e ->
+          e += "match a with";
+          List.iter (fun (ex,l) ->
+            e += "|%s -> `%s" $ (ocaml_string_of_expr v.vt_ty env ex) $ l 
+          ) v.vt_b;
+          e += "|x -> `Unknown x"
+        );
         e.nl ();
-        e.p (sprintf "let %s_to_string (a:%s_t) =" id id);
-        indent_fn e (fun e -> e.p "match a with");
-        list_iter_indent e (fun e (ex,l) ->
-            e.p (sprintf "|`%s -> \"%s\"" l l)) v.vt_b;
-        indent_fn e (fun e ->
-            e.p (sprintf  "|`Unknown x -> Printf.sprintf \"%s\" x" (ocaml_native_print v.vt_ty)));
+        e += "let %s_to_string (a:%s_t) =" $ id $ id;
+        e --> (fun e ->
+          e += "match a with";
+          List.iter (fun (ex,l) ->
+            e += "|`%s -> \"%s\"" $ l $ l
+          ) v.vt_b;
+            e += "|`Unknown x -> Printf.sprintf \"%s\" x" $ (ocaml_native_print v.vt_ty)
+        );
         e.nl ();
-        e.p (sprintf "let %s_of_string s : %s_t option = match s with" id id);
-        list_iter_indent e (fun e (ex,l) ->
-            e.p (sprintf "|\"%s\" -> Some `%s" l l)) v.vt_b;
-        indent_fn e (fun e -> e.p "|_ -> None");
+        e += "let %s_of_string s : %s_t option = match s with" $ id $ id;
+        e --> (fun e ->
+          List.iter (fun (ex,l) ->
+            e += "|\"%s\" -> Some `%s" $ l $ l
+          ) v.vt_b;
+          e += "|_ -> None"
+        );
         e.nl ();
     ) (get_variant_types env l)
 

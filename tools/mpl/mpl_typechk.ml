@@ -106,7 +106,7 @@ module Var = struct
         |Class x -> sprintf "Class(%s)" (String.concat "" x)
         |Label -> sprintf "Label"
     
-    open Printer
+    open Printer_utils.Printer
     let rec print_x e = function
     |S_var (id,exo,t) :: r->
         let s = match exo with |None -> "" |Some x -> sprintf "[%s]" (string_of_expr x) in
