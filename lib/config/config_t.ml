@@ -190,6 +190,12 @@ let cmd_string_to_val_atom str vty =
             raise (Type_error (loc, sprintf "Not a valid IP: %s" str)) in
         V_ip ip
     end
+    |T_variant vs -> begin
+        try
+          V_variant (List.find ((=) str) vs)
+        with
+          Not_found -> raise (Type_error (loc, sprintf "Not a valid variant '%s', must be [%s]" str (String.concat " or " vs)))
+    end
     |_ -> failwith "getopt_to_var_type: not finished yet"
 
 (** Turn a var_val into a getopt entry *)
