@@ -147,7 +147,7 @@ class virtual env (conf:Ssh_env_t.t) =
         let _ = match Ssh_classify.recv_statecall decoded with
         |None -> ()
             (* route incoming statecall to correct channel *)
-        |Some sc -> self#tick_automaton sc in 
+        |Some sc -> () in 
         decoded
         
     (* Transmit an SSH packet *)
@@ -158,7 +158,7 @@ class virtual env (conf:Ssh_env_t.t) =
             ~padfn:(Cryptokit.Random.string conf.rng)
             ~cryptfn:transport.cryptfn
             ~macfn:transport.crypt_macfn
-            ~splfn:(fun o -> self#tick_automaton o#xmit_statecall)
+            ~splfn:(fun o -> ())
             conf pack
     
     method private xmit_channel (chan:Ssh_channel.channel) (pack:Mpl_stdlib.env -> xmit) =
@@ -167,7 +167,7 @@ class virtual env (conf:Ssh_env_t.t) =
             ~padfn:(Cryptokit.Random.string conf.rng)
             ~cryptfn:transport.cryptfn
             ~macfn:transport.crypt_macfn
-            ~splfn:(fun o -> chan#tick_automaton o#xmit_statecall)
+            ~splfn:(fun o -> ())
             conf pack
 
     method private read_ssh_packet =

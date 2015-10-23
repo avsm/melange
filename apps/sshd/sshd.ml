@@ -244,7 +244,7 @@ let start_server port log caller fd =
     exit 1
     
 let _ =
-    let port = 2222 in
+    let port = 2223 in
     let sock = ADDR_INET (inet_addr_any, port) in
     let log = new Olog.stderr_log in
     log#init;

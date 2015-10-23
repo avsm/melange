@@ -152,15 +152,12 @@ class env conf server_conf = object(self)
             match s_kex with
             |Ssh_kex.Methods.DiffieHellmanGroup1SHA1 ->
                 log#debug "Kexinit: Expect DHInit";
-                self#tick_automaton `Expect_DHInit;
                 transport_state <- Negotiation_DHG1SHA1 next_args
             |Ssh_kex.Methods.DiffieHellmanGroup14SHA1 ->
                 log#debug "Kexinit: Expect DHInit Gex14";
-                self#tick_automaton `Expect_DHInit;
                 transport_state <- Negotiation_DHG14SHA1 next_args
             |Ssh_kex.Methods.DiffieHellmanGexSHA1 ->
                 log#debug "Kexinit: Expect GexSHA1";
-                self#tick_automaton `Expect_GexInit;
                 transport_state <- Negotiation_DHGexSHA1_Request next_args
         end
         |`NewKeys _ ->
@@ -367,7 +364,6 @@ class env conf server_conf = object(self)
         |Some chan ->
             (* try to tick the channel *)
             let sc = (MC.recv_statecall p :> Ssh_statecalls.t) in
-            chan#tick_automaton sc;
             fn (self#xmit_channel chan) chan;
         in
       let channel_check_reply x fn =
@@ -376,7 +372,6 @@ class env conf server_conf = object(self)
         |Some chan ->
             (* try to tick the channel *)
             let sc = (MC.recv_statecall p :> Ssh_statecalls.t) in
-            chan#tick_automaton sc;
             let res = fn (self#xmit_channel chan) chan in
             if x#want_reply then begin
                 if res then
@@ -416,7 +411,6 @@ class env conf server_conf = object(self)
             let dims = (x#width_chars, x#height_rows, x#width_pixels, x#height_pixels) in  
             match server_conf#connection_add_pty chan x#term dims with
             |Some (pty, pwin) ->
-                chan#tick_automaton `Expect_Pty_Success;
                 chan#set_pty (pty,pwin);
                 conf.Ssh_env_t.fd#set_nodelay true;
                 true
@@ -426,7 +420,6 @@ class env conf server_conf = object(self)
         channel_check_reply x (fun xmitfn chan ->
             match server_conf#connection_request_exec chan x#command with
             |Some (pid, stdin, stdout, stderr) ->
-                chan#tick_automaton `Expect_Exec_Success;
                 let ostdin = may (fun stdin -> new Ounix.stream_odescr stdin) stdin in
                 let ostdout = may (self#ofd_of_stdout conf.Ssh_env_t.osel chan) stdout in
                 let ostderr = may (self#ofd_of_stderr conf.Ssh_env_t.osel chan) stderr in
@@ -441,7 +434,6 @@ class env conf server_conf = object(self)
         channel_check_reply x (fun xmitfn chan ->
             match server_conf#connection_request_shell chan chan#pty with
             |Some (pid, stdin, stdout, stderr) ->
-                chan#tick_automaton `Expect_Shell_Success;
                 let ostdin = may (fun stdin -> new Ounix.stream_odescr stdin) stdin in
                 let ostdout = may (fun stdout -> self#ofd_of_stdout conf.Ssh_env_t.osel chan stdout) stdout in
                 let ostderr = may (self#ofd_of_stderr conf.Ssh_env_t.osel chan) stderr in
@@ -483,6 +475,7 @@ class env conf server_conf = object(self)
         channel_check x (fun xmitfn chan ->
             self#close_channel chan;
         )
+      |`Request (`Env _) -> ()
       |`Request _ ->
         (* `Env, `ExitSignal, `ExitStatus, `LocalFlowControl, `Signal, `Subsystem,
             `WindowChange, `X11 *)
